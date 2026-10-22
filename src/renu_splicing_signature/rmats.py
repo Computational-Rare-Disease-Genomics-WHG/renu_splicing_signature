@@ -36,7 +36,10 @@ def _parse_counts(value: str, context: str) -> list[int | None]:
         if token.upper() == "NA" or not token:
             counts.append(None)
         elif re.fullmatch(r"[0-9]+", token):
-            counts.append(int(token))
+            try:
+                counts.append(int(token))
+            except ValueError as exc:
+                raise SignatureError(f"Count in {context} exceeds the supported integer size") from exc
         else:
             raise SignatureError(f"Invalid count {token!r} in {context}; expected a nonnegative integer or NA")
     return counts

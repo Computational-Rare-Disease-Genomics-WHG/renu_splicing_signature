@@ -156,6 +156,26 @@ def test_malformed_input_has_no_traceback(model_file, write_rmats, rmats_rows):
     assert "count" in result.stderr and "Traceback" not in result.stderr
 
 
+@pytest.mark.parametrize("column,index", [
+    ("IJC_SAMPLE_1", 12), ("SJC_SAMPLE_1", 13),
+    ("IJC_SAMPLE_2", 14), ("SJC_SAMPLE_2", 15),
+])
+def test_oversized_count_has_context_without_traceback(
+    model_file, write_rmats, rmats_rows, monkeypatch, column, index,
+):
+    monkeypatch.setenv("PYTHONINTMAXSTRDIGITS", "640")
+    tokens = rmats_rows[0][index].split(",")
+    tokens[0] = "9" * 641
+    rmats_rows[0][index] = ",".join(tokens)
+    result = run_cli(write_rmats(), "--signature", model_file)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "error:" in result.stderr
+    assert column in result.stderr and "row 2" in result.stderr
+    assert "Traceback" not in result.stderr
+    assert len(result.stderr) < 500
+
+
 def test_unknown_configuration_key_has_clear_error(model_file, write_rmats):
     model_file.write_text("min_read_dept = 100\n" + model_file.read_text())
     result = run_cli(write_rmats(), "--signature", model_file)

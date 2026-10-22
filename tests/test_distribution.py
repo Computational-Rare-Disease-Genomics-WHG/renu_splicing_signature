@@ -32,6 +32,7 @@ def test_sdist_ships_model_and_examples_without_workspace_artifacts(tmp_path):
         paths = [Path(member.name) for member in archive.getmembers()]
     assert any(str(p).endswith("src/renu_splicing_signature/data/insT.toml") for p in paths)
     assert any(str(p).endswith("examples/insT.toml") for p in paths)
+    assert any(str(p).endswith("examples/A5SS.MATS.JC.txt") for p in paths)
     assert not any({".superpowers", ".venv", ".aws"}.intersection(p.parts) for p in paths)
 
 
