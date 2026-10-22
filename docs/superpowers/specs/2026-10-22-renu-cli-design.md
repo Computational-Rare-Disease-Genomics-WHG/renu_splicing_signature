@@ -27,7 +27,9 @@ The user confirmed:
   etc., according to the selected control group.
 - Do not add a --print-signature flag.
 - Explicitly list required rMATS columns and the GRCh38 requirement in README.
-- Flag the question of a minimum coverage threshold to the user later.
+- Configure a minimum total junction read depth with TOML min_read_depth,
+  default 0. Exclude events below the threshold separately per sample and
+  from control baselines; zero coverage remains missing at any threshold.
 
 ## Approach
 
@@ -193,8 +195,11 @@ IJC=SJC=0 represents an unavailable event in that sample. Exclude it from that
 sample's sums and, for a control sample, from that event's control mean.
 Report zero coverage and warn. A single zero count paired with a positive
 count remains usable, with the original 0.5 pseudocount. Do not pool counts
-before the log transform or weight controls by depth. Do not impose an
-unapproved positive minimum coverage threshold.
+before the log transform or weight controls by depth. Require IJC+SJC to be
+at least the configured nonnegative integer min_read_depth, default 0. An
+omitted setting also defaults to 0 for existing custom models. Below-threshold
+events have detail status below_min_read_depth and generate warnings. A sample
+exactly at the threshold is usable when it has positive coverage.
 
 ## Packaging and documentation
 
@@ -236,8 +241,7 @@ formatting of floating-point TSV values without intermediate rounding, and
 wording of diagnostics. Keep the user-facing interface small and follow the
 decisions above.
 
-## Follow-up to flag to the user
+## Minimum coverage follow-up resolved
 
-At implementation handoff, explicitly flag whether a minimum supporting-read
-coverage threshold should be introduced. No positive threshold is chosen yet;
-entirely zero-coverage events are already excluded per sample.
+The user requested a configurable minimum read depth, default 0. It applies
+to total IJC+SJC per event and sample, including controls used for the baseline.

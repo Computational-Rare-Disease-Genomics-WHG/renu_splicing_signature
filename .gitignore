@@ -1,3 +1,14 @@
 # pixi environments
 .pixi/*
 !.pixi/config.toml
+
+# Python environments and build products
+.venv/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Local data
+/data/
