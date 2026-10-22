@@ -10,5 +10,5 @@ __pycache__/
 dist/
 build/
 
-# Example
-/A5SS.MATS.JC.txt
+# Local data
+/data/
