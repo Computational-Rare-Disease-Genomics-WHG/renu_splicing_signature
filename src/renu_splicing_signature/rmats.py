@@ -1,8 +1,9 @@
 """Read sample-ordered junction counts without using rMATS statistical results."""
+
 import csv
+import re
 from dataclasses import dataclass
 from pathlib import Path
-import re
 
 from .model import COORDINATE_COLUMNS, EventKey, Model, SignatureError, event_key
 
@@ -39,9 +40,13 @@ def _parse_counts(value: str, context: str) -> list[int | None]:
             try:
                 counts.append(int(token))
             except ValueError as exc:
-                raise SignatureError(f"Count in {context} exceeds the supported integer size") from exc
+                raise SignatureError(
+                    f"Count in {context} exceeds the supported integer size"
+                ) from exc
         else:
-            raise SignatureError(f"Invalid count {token!r} in {context}; expected a nonnegative integer or NA")
+            raise SignatureError(
+                f"Invalid count {token!r} in {context}; expected a nonnegative integer or NA"
+            )
     return counts
 
 
@@ -70,7 +75,9 @@ def read_rmats(
                 continue
             line = reader.line_num
             if len(row) != len(header):
-                raise SignatureError(f"Row {line} has {len(row)} fields; expected {len(header)}")
+                raise SignatureError(
+                    f"Row {line} has {len(row)} fields; expected {len(header)}"
+                )
             try:
                 coords = tuple(int(row[indices[name]]) for name in COORDINATE_COLUMNS)
             except ValueError as exc:
@@ -79,26 +86,41 @@ def read_rmats(
             if key not in selected:
                 continue
             if key in event_counts:
-                raise SignatureError(f"Duplicate selected event at row {line}: {selected[key].id}")
-            vectors = [_parse_counts(row[indices[name]], f"{name}, row {line}") for name in COUNT_COLUMNS]
+                raise SignatureError(
+                    f"Duplicate selected event at row {line}: {selected[key].id}"
+                )
+            vectors = [
+                _parse_counts(row[indices[name]], f"{name}, row {line}")
+                for name in COUNT_COLUMNS
+            ]
             if len(vectors[0]) != len(vectors[1]) or len(vectors[2]) != len(vectors[3]):
                 raise SignatureError(f"IJC/SJC vector length mismatch at row {line}")
             sizes = (len(vectors[0]), len(vectors[2]))
             if group_sizes is not None and group_sizes != sizes:
-                raise SignatureError(f"Inconsistent group sizes at row {line}: {sizes}; expected {group_sizes}")
+                raise SignatureError(
+                    f"Inconsistent group sizes at row {line}: {sizes}; expected {group_sizes}"
+                )
             group_sizes = sizes
             pairs = []
             for ijcs, sjcs in ((vectors[0], vectors[1]), (vectors[2], vectors[3])):
                 pairs.extend(Counts(i, s) for i, s in zip(ijcs, sjcs))
             event_counts[key] = tuple(pairs)
     if group_sizes is None:
-        raise SignatureError("No selected A5SS events found; check the input and reference genome (bundled model: GRCh38)")
+        raise SignatureError(
+            "No selected A5SS events found; check the input and reference genome (bundled model: GRCh38)"
+        )
     samples = []
     for group, size in enumerate(group_sizes, start=1):
         role = "control" if group == controls_group else "case"
-        names = (group_names or {}).get(group, [f"{role}s_{i + 1}" for i in range(size)])
-        if len(names) != size or any(not name.strip() or any(c in name for c in "\t\r\n") for name in names):
-            raise SignatureError(f"Sample names for group {group} must contain {size} nonempty names")
+        names = (group_names or {}).get(
+            group, [f"{role}s_{i + 1}" for i in range(size)]
+        )
+        if len(names) != size or any(
+            not name.strip() or any(c in name for c in "\t\r\n") for name in names
+        ):
+            raise SignatureError(
+                f"Sample names for group {group} must contain {size} nonempty names"
+            )
         samples.extend(Sample(name, group, role) for name in names)
     if len({sample.name for sample in samples}) != len(samples):
         raise SignatureError("Sample names must be unique across both groups")

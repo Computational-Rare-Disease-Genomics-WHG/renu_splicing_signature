@@ -1,14 +1,20 @@
 """Load and validate portable A5SS model parameters."""
-from dataclasses import dataclass
-from importlib.resources import files
+
 import math
-from pathlib import Path
 import re
 import tomllib
+from dataclasses import dataclass
+from importlib.resources import files
+from pathlib import Path
 
 EventKey = tuple[str, str, tuple[int, ...]]
 COORDINATE_COLUMNS = (
-    "longExonStart_0base", "longExonEnd", "shortES", "shortEE", "flankingES", "flankingEE",
+    "longExonStart_0base",
+    "longExonEnd",
+    "shortES",
+    "shortEE",
+    "flankingES",
+    "flankingEE",
 )
 
 
@@ -45,8 +51,13 @@ class Event:
 
     def __post_init__(self):
         parts = self.id.split(":") if isinstance(self.id, str) else []
-        if (len(parts) != 9 or parts[0] != "A5SS" or not parts[1] or not parts[2]
-                or any(re.fullmatch(r"[0-9]+", c) is None for c in parts[3:])):
+        if (
+            len(parts) != 9
+            or parts[0] != "A5SS"
+            or not parts[1]
+            or not parts[2]
+            or any(re.fullmatch(r"[0-9]+", c) is None for c in parts[3:])
+        ):
             raise SignatureError(f"Invalid A5SS event id: {self.id!r}")
         if self.strand not in ("+", "-"):
             raise SignatureError(f"Invalid strand for {self.id}")
@@ -58,7 +69,7 @@ class Event:
         ls, le, ss, se, fs, fe = self.coordinates
         valid_exons = ls < le and ss < se and fs < fe
         if self.strand == "+":
-            valid_a5ss = ls == ss and se < le and le <= fs
+            valid_a5ss = ls == ss and se < le <= fs
         else:
             valid_a5ss = ls < ss and le == se and fe <= ls
         if not valid_exons or not valid_a5ss:
@@ -88,13 +99,24 @@ class Model:
 
 def load_model(path: Path | None = None) -> Model:
     """Load a complete custom model or the bundled Table S2 model."""
-    resource = path if path is not None else files("renu_splicing_signature").joinpath("data/insT.toml")
+    resource = (
+        path
+        if path is not None
+        else files("renu_splicing_signature").joinpath("data/insT.toml")
+    )
     try:
         with resource.open("rb") as handle:
             config = tomllib.load(handle)
     except tomllib.TOMLDecodeError as exc:
         raise SignatureError(f"Invalid TOML in {resource}: {exc}") from exc
-    unknown = config.keys() - {"schema_version", "name", "reference_genome", "intercept", "min_read_depth", "events"}
+    unknown = config.keys() - {
+        "schema_version",
+        "name",
+        "reference_genome",
+        "intercept",
+        "min_read_depth",
+        "events",
+    }
     if unknown:
         raise SignatureError("Unknown model fields: " + ", ".join(sorted(unknown)))
     if type(config.get("schema_version")) is not int or config["schema_version"] != 1:
@@ -116,7 +138,9 @@ def load_model(path: Path | None = None) -> Model:
             raise SignatureError("Each model event must be a TOML table")
         unknown = definition.keys() - set(event_fields)
         if unknown:
-            raise SignatureError("Unknown model event fields: " + ", ".join(sorted(unknown)))
+            raise SignatureError(
+                "Unknown model event fields: " + ", ".join(sorted(unknown))
+            )
         try:
             event = Event(**{key: definition[key] for key in event_fields})
         except KeyError as exc:
@@ -124,4 +148,10 @@ def load_model(path: Path | None = None) -> Model:
         if any(event.key == previous.key for previous in events):
             raise SignatureError(f"Duplicate model event coordinates: {event.id}")
         events.append(event)
-    return Model(config["name"], config["reference_genome"], intercept, tuple(events), min_read_depth)
+    return Model(
+        config["name"],
+        config["reference_genome"],
+        intercept,
+        tuple(events),
+        min_read_depth,
+    )

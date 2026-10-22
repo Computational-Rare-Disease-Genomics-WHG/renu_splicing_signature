@@ -62,11 +62,11 @@ Builder proposals, not additional user requirements:
 
 - Distribution: renu-splicing-signature. Executable: renu-score.
 - Main usage: `renu-score A5SS.MATS.JC.txt --output scores.tsv`.
-- `--controls-group {1,2}` defaults to 2.
-- `--signature PATH` reads a complete replacement model from TOML.
+- `--control-group {1,2}` defaults to 2.
+- `--config PATH` reads a complete replacement model from TOML.
 - `--output PATH` writes TSV; absent this option, write TSV to stdout.
 - `--details PATH` optionally writes per-sample, per-event intermediate values.
-- `--group1-names PATH` and `--group2-names PATH` optionally supply one sample
+- `--group1-samples PATH` and `--group2-samples PATH` optionally supply one sample
   name per line in the corresponding rMATS vector order. Otherwise use
   cases_1, cases_2, etc. and controls_1, controls_2, etc. according to role.
   Names must be nonempty, unique, and match group sizes.

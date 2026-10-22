@@ -1,6 +1,7 @@
 """Apply a fixed signature after centering on matched controls."""
-from dataclasses import dataclass
+
 import math
+from dataclasses import dataclass
 
 from .model import Model, SignatureError
 from .rmats import Counts, Dataset
@@ -78,18 +79,27 @@ def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
     for event in model.events:
         counts = dataset.event_counts.get(event.key)
         measurements = [
-            _measurement(counts[index] if counts is not None else None, model.min_read_depth)
+            _measurement(
+                counts[index] if counts is not None else None, model.min_read_depth
+            )
             for index in range(n_samples)
         ]
         control_values = [
-            value for sample, (value, _) in zip(dataset.samples, measurements)
+            value
+            for sample, (value, _) in zip(dataset.samples, measurements)
             if sample.role == "control" and value is not None
         ]
-        baseline = math.fsum(control_values) / len(control_values) if control_values else None
+        baseline = (
+            math.fsum(control_values) / len(control_values) if control_values else None
+        )
         if baseline is None and counts is not None:
-            warnings.append(f"No usable matched controls for event {event.id}; event cannot be centered")
+            warnings.append(
+                f"No usable matched controls for event {event.id}; event cannot be centered"
+            )
         missing_by_status: dict[str, list[str]] = {}
-        for index, (sample, (log_ratio, status)) in enumerate(zip(dataset.samples, measurements)):
+        for index, (sample, (log_ratio, status)) in enumerate(
+            zip(dataset.samples, measurements)
+        ):
             pair = counts[index] if counts is not None else None
             contribution = weighted_contribution = None
             if status == "zero_coverage":
@@ -100,20 +110,34 @@ def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
                 contribution = event.direction * (log_ratio - baseline)
                 weighted_contribution = event.weight * contribution
                 if not math.isfinite(weighted_contribution):
-                    raise SignatureError(f"Nonfinite weighted contribution for {sample.name}, {event.id}")
+                    raise SignatureError(
+                        f"Nonfinite weighted contribution for {sample.name}, {event.id}"
+                    )
                 contributions[index].append(contribution)
                 weighted[index].append(weighted_contribution)
             if status != "used":
                 missing_by_status.setdefault(status, []).append(sample.name)
-            details.append(DetailRow(
-                sample.name, sample.group, sample.role, event.id,
-                pair.ijc if pair is not None else None,
-                pair.sjc if pair is not None else None,
-                log_ratio, baseline, event.direction, event.weight,
-                contribution, weighted_contribution, status,
-            ))
+            details.append(
+                DetailRow(
+                    sample.name,
+                    sample.group,
+                    sample.role,
+                    event.id,
+                    pair.ijc if pair is not None else None,
+                    pair.sjc if pair is not None else None,
+                    log_ratio,
+                    baseline,
+                    event.direction,
+                    event.weight,
+                    contribution,
+                    weighted_contribution,
+                    status,
+                )
+            )
         for status, names in missing_by_status.items():
-            warnings.append(f"Event {event.id} unavailable for {', '.join(names)} ({status})")
+            warnings.append(
+                f"Event {event.id} unavailable for {', '.join(names)} ({status})"
+            )
     rows = []
     for index, sample in enumerate(dataset.samples):
         used = len(contributions[index])
@@ -123,18 +147,33 @@ def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
                 weighted_sum = math.fsum(weighted[index])
                 linpred = model.intercept + weighted_sum
             except OverflowError as exc:
-                raise SignatureError(f"Score overflow for {sample.name}; check model parameters") from exc
+                raise SignatureError(
+                    f"Score overflow for {sample.name}; check model parameters"
+                ) from exc
             if not math.isfinite(linpred):
-                raise SignatureError(f"Nonfinite linear predictor for {sample.name}; check model parameters")
+                raise SignatureError(
+                    f"Nonfinite linear predictor for {sample.name}; check model parameters"
+                )
             probability = _sigmoid(linpred)
             status = "complete" if used == len(model.events) else "partial"
         else:
             uniform_sum = weighted_sum = linpred = probability = None
             status = "unavailable"
-        rows.append(ScoreRow(
-            sample.name, sample.group, sample.role, uniform_sum, weighted_sum,
-            linpred, probability, used, len(model.events), zero_counts[index], status,
-        ))
+        rows.append(
+            ScoreRow(
+                sample.name,
+                sample.group,
+                sample.role,
+                uniform_sum,
+                weighted_sum,
+                linpred,
+                probability,
+                used,
+                len(model.events),
+                zero_counts[index],
+                status,
+            )
+        )
     if not any(row.n_events_used for row in rows):
         raise SignatureError(
             "No samples have usable signature events with a matched-control baseline",
