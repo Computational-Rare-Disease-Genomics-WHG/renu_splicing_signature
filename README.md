@@ -14,8 +14,7 @@ using the supplied matched controls as a baseline.
 Install with [uv](https://docs.astral.sh/uv/guides/tools/):
 
 ```bash
-# Replace OWNER/REPOSITORY with the GitHub repository containing this package.
-uv tool install --python 3.11 'git+https://github.com/OWNER/REPOSITORY.git'
+uv tool install --python 3.11 'git+https://github.com/Computational-Rare-Disease-Genomics-WHG/renu_splicing_signature.git'
 renu-score --help
 ```
 
