@@ -42,6 +42,19 @@ def test_minimum_read_depth_is_configurable(model_file):
     assert load_model(model_file).min_read_depth == 10
 
 
+def test_rejects_unknown_model_keys(model_file):
+    model_file.write_text("min_read_dept = 100\n" + model_file.read_text())
+    with pytest.raises(SignatureError, match="min_read_dept"):
+        load_model(model_file)
+
+
+def test_rejects_unknown_event_keys(model_file):
+    content = model_file.read_text().replace("weight = 2.0", "weight = 2.0\nweigth = 3.0")
+    model_file.write_text(content)
+    with pytest.raises(SignatureError, match="weigth"):
+        load_model(model_file)
+
+
 @pytest.mark.parametrize("value", ["-1", "1.5", "true", '"10"', "inf", "nan"])
 def test_minimum_read_depth_requires_nonnegative_integer(model_file, value):
     model_file.write_text(f"min_read_depth = {value}\n" + model_file.read_text())

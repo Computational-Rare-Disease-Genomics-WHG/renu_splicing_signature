@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import math
 
 from .model import Model, SignatureError
-from .rmats import Dataset
+from .rmats import Counts, Dataset
 
 
 @dataclass(frozen=True)
@@ -52,6 +52,21 @@ def _sigmoid(value: float) -> float:
     return exp_value / (1 + exp_value)
 
 
+def _measurement(pair: Counts | None, min_read_depth: int) -> tuple[float | None, str]:
+    """Calculate the log ratio or identify why the measurement is unavailable."""
+    if pair is None:
+        return None, "absent_from_file"
+    if pair.ijc is None or pair.sjc is None:
+        return None, "missing_counts"
+    if pair.ijc == pair.sjc == 0:
+        return None, "zero_coverage"
+    if pair.ijc + pair.sjc < min_read_depth:
+        return None, "below_min_read_depth"
+    # log(2*count+1) differs from log(count+0.5) by log(2), which cancels;
+    # integer arithmetic avoids overflow at conversion.
+    return math.log(2 * pair.ijc + 1) - math.log(2 * pair.sjc + 1), "used"
+
+
 def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
     """Score each sample with its own available subset; never impute missingness."""
     n_samples = len(dataset.samples)
@@ -59,46 +74,29 @@ def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
     weighted: list[list[float]] = [[] for _ in dataset.samples]
     zero_counts = [0] * n_samples
     details = []
-    warnings = list(dataset.warnings)
+    warnings = []
     for event in model.events:
         counts = dataset.event_counts.get(event.key)
-        log_ratios: list[float | None] = []
-        for index in range(n_samples):
-            pair = counts[index] if counts is not None else None
-            if pair is None:
-                log_ratios.append(None)
-            elif pair.ijc == pair.sjc == 0:
-                zero_counts[index] += 1
-                log_ratios.append(None)
-            elif pair.ijc + pair.sjc < model.min_read_depth:
-                log_ratios.append(None)
-            else:
-                # log(2*count+1) differs from log(count+0.5) by log(2),
-                # which cancels; integer arithmetic avoids overflow at conversion.
-                log_ratios.append(math.log(2 * pair.ijc + 1) - math.log(2 * pair.sjc + 1))
+        measurements = [
+            _measurement(counts[index] if counts is not None else None, model.min_read_depth)
+            for index in range(n_samples)
+        ]
         control_values = [
-            value for sample, value in zip(dataset.samples, log_ratios)
+            value for sample, (value, _) in zip(dataset.samples, measurements)
             if sample.role == "control" and value is not None
         ]
         baseline = math.fsum(control_values) / len(control_values) if control_values else None
         if baseline is None and counts is not None:
             warnings.append(f"No usable matched controls for event {event.id}; event cannot be centered")
         missing_by_status: dict[str, list[str]] = {}
-        for index, (sample, log_ratio) in enumerate(zip(dataset.samples, log_ratios)):
+        for index, (sample, (log_ratio, status)) in enumerate(zip(dataset.samples, measurements)):
             pair = counts[index] if counts is not None else None
             contribution = weighted_contribution = None
-            if counts is None:
-                status = "absent_from_file"
-            elif pair is None:
-                status = "missing_counts"
-            elif pair.ijc == pair.sjc == 0:
-                status = "zero_coverage"
-            elif pair.ijc + pair.sjc < model.min_read_depth:
-                status = "below_min_read_depth"
-            elif baseline is None:
+            if status == "zero_coverage":
+                zero_counts[index] += 1
+            if status == "used" and baseline is None:
                 status = "no_control_baseline"
-            else:
-                status = "used"
+            if status == "used":
                 contribution = event.direction * (log_ratio - baseline)
                 weighted_contribution = event.weight * contribution
                 if not math.isfinite(weighted_contribution):
@@ -115,7 +113,7 @@ def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
                 contribution, weighted_contribution, status,
             ))
         for status, names in missing_by_status.items():
-            warnings.append(f"Event {event.id} unavailable for {', '.join(names)} ({status}); scores use available events only")
+            warnings.append(f"Event {event.id} unavailable for {', '.join(names)} ({status})")
     rows = []
     for index, sample in enumerate(dataset.samples):
         used = len(contributions[index])
@@ -138,5 +136,8 @@ def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
             linpred, probability, used, len(model.events), zero_counts[index], status,
         ))
     if not any(row.n_events_used for row in rows):
-        raise SignatureError("No samples have usable signature events with a matched-control baseline")
+        raise SignatureError(
+            "No samples have usable signature events with a matched-control baseline",
+            warnings=tuple(warnings),
+        )
     return ScoreResult(rows, details, warnings)

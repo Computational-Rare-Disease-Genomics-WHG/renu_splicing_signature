@@ -99,6 +99,15 @@ def test_whole_file_missing_event_keeps_na_details(model_file, write_rmats, rmat
     assert all(d.status == "absent_from_file" and d.ijc is None for d in absent)
 
 
+def test_absent_event_has_one_warning_with_affected_samples(model_file, write_rmats, rmats_rows):
+    model = load_model(model_file)
+    result = score_samples(model, read_rmats(write_rmats(rmats_rows[:1]), model))
+    warnings = [warning for warning in result.warnings if "MAP4K4" in warning]
+    assert len(warnings) == 1
+    assert "absent_from_file" in warnings[0]
+    assert all(name in warnings[0] for name in ("cases_1", "controls_1", "controls_2"))
+
+
 def test_swapped_control_group_changes_baseline(model_file, write_rmats):
     model = load_model(model_file)
     result = score_samples(model, read_rmats(write_rmats(), model, controls_group=1))

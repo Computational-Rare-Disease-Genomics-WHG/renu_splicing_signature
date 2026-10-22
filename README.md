@@ -73,6 +73,7 @@ renu-score A5SS.MATS.JC.txt --group1-names case_ids.txt --group2-names control_i
 ```
 
 Without `--output`, scores are written to stdout. Warnings are written to stderr.
+If no samples can be scored, exclusion reasons precede the error on stderr.
 
 The scores TSV contains:
 
@@ -90,6 +91,8 @@ The scores TSV contains:
 The optional `--details` TSV includes one row for every sample/event pair:
 counts, log ratio, control mean, direction, weight, both contributions, and
 event status. Missing values appear as `NA`.
+If only one junction count is missing, its observed partner is preserved in
+the details, while the event is excluded from that sample's score.
 
 ## Configuration
 
@@ -107,6 +110,7 @@ The TOML also configures `intercept` (default `-2.927847423`) and
 `min_read_depth` (default `0`). Read depth is `IJC + SJC` per sample and event.
 Events below the threshold are excluded from that sample's score and, for
 controls, from the control baseline. Zero-coverage events are always missing.
+Unknown settings and event fields are rejected to catch spelling mistakes.
 
 ## References
 

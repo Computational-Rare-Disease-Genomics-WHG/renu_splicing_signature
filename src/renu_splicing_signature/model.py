@@ -15,6 +15,10 @@ COORDINATE_COLUMNS = (
 class SignatureError(ValueError):
     """An input cannot be used to quantify the signature."""
 
+    def __init__(self, message: str, *, warnings: tuple[str, ...] = ()):
+        super().__init__(message)
+        self.warnings = warnings
+
 
 def event_key(chromosome: str, strand: str, coordinates: tuple[int, ...]) -> EventKey:
     return (chromosome.removeprefix("chr"), strand, coordinates)
@@ -90,6 +94,9 @@ def load_model(path: Path | None = None) -> Model:
             config = tomllib.load(handle)
     except tomllib.TOMLDecodeError as exc:
         raise SignatureError(f"Invalid TOML in {resource}: {exc}") from exc
+    unknown = config.keys() - {"schema_version", "name", "reference_genome", "intercept", "min_read_depth", "events"}
+    if unknown:
+        raise SignatureError("Unknown model fields: " + ", ".join(sorted(unknown)))
     if type(config.get("schema_version")) is not int or config["schema_version"] != 1:
         raise SignatureError("Model schema_version must be 1")
     for field in ("name", "reference_genome"):
@@ -102,12 +109,16 @@ def load_model(path: Path | None = None) -> Model:
     definitions = config.get("events")
     if not isinstance(definitions, list) or not definitions:
         raise SignatureError("Model must contain at least one event")
+    event_fields = ("id", "strand", "direction", "weight")
     events = []
     for definition in definitions:
         if not isinstance(definition, dict):
             raise SignatureError("Each model event must be a TOML table")
+        unknown = definition.keys() - set(event_fields)
+        if unknown:
+            raise SignatureError("Unknown model event fields: " + ", ".join(sorted(unknown)))
         try:
-            event = Event(**{key: definition[key] for key in ("id", "strand", "direction", "weight")})
+            event = Event(**{key: definition[key] for key in event_fields})
         except KeyError as exc:
             raise SignatureError(f"Model event is missing {exc.args[0]}") from exc
         if any(event.key == previous.key for previous in events):

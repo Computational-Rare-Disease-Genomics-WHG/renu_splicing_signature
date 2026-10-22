@@ -36,7 +36,8 @@ def test_explicit_missing_counts_are_sample_specific(model_file, write_rmats, rm
     rmats_rows[0][14] = token + ",4"
     data = read_rmats(write_rmats(), load_model(model_file))
     counts = next(iter(data.event_counts.values()))
-    assert counts[1] is None
+    assert counts[1].ijc is None
+    assert counts[1].sjc == 4
     assert counts[2].ijc == 4
 
 
@@ -70,9 +71,9 @@ def test_reports_missing_columns(model_file, write_rmats):
 
 
 def test_absent_event_keeps_remaining_events(model_file, write_rmats, rmats_rows):
-    data = read_rmats(write_rmats(rmats_rows[:1]), load_model(model_file))
-    assert len(data.event_counts) == 1
-    assert data.warnings
+    model = load_model(model_file)
+    data = read_rmats(write_rmats(rmats_rows[:1]), model)
+    assert set(data.event_counts) == {model.events[0].key}
 
 
 def test_optional_names_preserve_vector_order(model_file, write_rmats):

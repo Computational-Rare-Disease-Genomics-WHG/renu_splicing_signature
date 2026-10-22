@@ -12,8 +12,8 @@ REQUIRED_COLUMNS = ("chr", "strand", *COORDINATE_COLUMNS, *COUNT_COLUMNS)
 
 @dataclass(frozen=True)
 class Counts:
-    ijc: int
-    sjc: int
+    ijc: int | None
+    sjc: int | None
 
 
 @dataclass(frozen=True)
@@ -26,8 +26,7 @@ class Sample:
 @dataclass
 class Dataset:
     samples: tuple[Sample, ...]
-    event_counts: dict[EventKey, tuple[Counts | None, ...]]
-    warnings: list[str]
+    event_counts: dict[EventKey, tuple[Counts, ...]]
 
 
 def _parse_counts(value: str, context: str) -> list[int | None]:
@@ -87,7 +86,7 @@ def read_rmats(
             group_sizes = sizes
             pairs = []
             for ijcs, sjcs in ((vectors[0], vectors[1]), (vectors[2], vectors[3])):
-                pairs.extend(None if i is None or s is None else Counts(i, s) for i, s in zip(ijcs, sjcs))
+                pairs.extend(Counts(i, s) for i, s in zip(ijcs, sjcs))
             event_counts[key] = tuple(pairs)
     if group_sizes is None:
         raise SignatureError("No selected A5SS events found; check the input and reference genome (bundled model: GRCh38)")
@@ -100,5 +99,4 @@ def read_rmats(
         samples.extend(Sample(name, group, role) for name in names)
     if len({sample.name for sample in samples}) != len(samples):
         raise SignatureError("Sample names must be unique across both groups")
-    warnings = [f"Selected event absent from file: {event.id}" for event in model.events if event.key not in event_counts]
-    return Dataset(tuple(samples), event_counts, warnings)
+    return Dataset(tuple(samples), event_counts)

@@ -49,6 +49,34 @@ def test_partial_warnings_do_not_pollute_stdout(model_file, write_rmats, rmats_r
     assert "warning:" not in result.stdout
 
 
+@pytest.mark.parametrize("ijc,sjc,min_depth,reason", [
+    ("0,0", "0,0", 0, "zero_coverage"),
+    ("NA,NA", "4,4", 0, "missing_counts"),
+    ("4,4", "4,4", 9, "below_min_read_depth"),
+])
+def test_unusable_controls_report_reasons_without_replacing_outputs(
+    model_file, write_rmats, rmats_rows, tmp_path, ijc, sjc, min_depth, reason,
+):
+    model_file.write_text(f"min_read_depth = {min_depth}\n" + model_file.read_text())
+    for row in rmats_rows:
+        row[14:16] = [ijc, sjc]
+    output, details = tmp_path / "scores.tsv", tmp_path / "details.tsv"
+    output.write_text("previous scores")
+    details.write_text("previous details")
+    result = run_cli(write_rmats(), "--signature", model_file,
+                     "--output", output, "--details", details)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "Traceback" not in result.stderr
+    assert "error:" in result.stderr
+    assert "No usable matched controls" in result.stderr
+    assert reason in result.stderr
+    assert "CTDSP2" in result.stderr and "MAP4K4" in result.stderr
+    assert "controls_1" in result.stderr and "controls_2" in result.stderr
+    assert output.read_text() == "previous scores"
+    assert details.read_text() == "previous details"
+
+
 def test_files_names_and_details(model_file, write_rmats, tmp_path):
     names = tmp_path / "names.txt"
     names.write_text("patient\n")
@@ -62,6 +90,23 @@ def test_files_names_and_details(model_file, write_rmats, tmp_path):
     assert len(rows) == 6
     assert rows[0]["status"] == "used"
     assert float(rows[0]["control_mean"]) == pytest.approx(-math.log(9) / 2)
+
+
+@pytest.mark.parametrize("ijc,sjc", [("10", "NA"), ("NA", "10")])
+def test_details_preserve_observed_partner_of_missing_count(
+    model_file, write_rmats, rmats_rows, tmp_path, ijc, sjc,
+):
+    rmats_rows[0][12:14] = [ijc, sjc]
+    details = tmp_path / "details.tsv"
+    result = run_cli(write_rmats(), "--signature", model_file, "--details", details)
+    assert result.returncode == 0, result.stderr
+    detail = parse_tsv(details.read_text())[0]
+    assert (detail["ijc"], detail["sjc"]) == (ijc, sjc)
+    assert detail["status"] == "missing_counts"
+    assert detail["contribution"] == "NA"
+    score = parse_tsv(result.stdout)[0]
+    assert score["n_events_used"] == "1"
+    assert float(score["weighted_sum"]) == pytest.approx(0.75 * math.log(9))
 
 
 def test_intercept_changes_only_through_toml(model_file, write_rmats):
@@ -109,6 +154,15 @@ def test_malformed_input_has_no_traceback(model_file, write_rmats, rmats_rows):
     result = run_cli(write_rmats(), "--signature", model_file)
     assert result.returncode != 0
     assert "count" in result.stderr and "Traceback" not in result.stderr
+
+
+def test_unknown_configuration_key_has_clear_error(model_file, write_rmats):
+    model_file.write_text("min_read_dept = 100\n" + model_file.read_text())
+    result = run_cli(write_rmats(), "--signature", model_file)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "min_read_dept" in result.stderr
+    assert "error:" in result.stderr and "Traceback" not in result.stderr
 
 
 @pytest.mark.parametrize("target", ["input", "model", "names", "same_output", "hardlink"])

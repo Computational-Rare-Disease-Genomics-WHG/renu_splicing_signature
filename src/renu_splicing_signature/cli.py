@@ -100,6 +100,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.output is None:
             sys.stdout.write(scores_text)
     except (SignatureError, OSError, UnicodeError, csv.Error) as exc:
+        if isinstance(exc, SignatureError):
+            for message in exc.warnings:
+                print(f"warning: {message}", file=sys.stderr)
         print(f"renu-score: error: {exc}", file=sys.stderr)
         return 2
     return 0
