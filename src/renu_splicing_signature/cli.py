@@ -39,6 +39,8 @@ def _same_path(first: Path, second: Path) -> bool:
 
 def _check_output_paths(outputs: list[Path], inputs: list[Path]) -> None:
     for index, output in enumerate(outputs):
+        if output.exists() and not output.is_file():
+            raise SignatureError(f"Output path must be a file, not a directory or special device: {output}")
         for other in [*inputs, *outputs[:index]]:
             if _same_path(output, other):
                 raise SignatureError(f"Output path {output} would overwrite an input or another output: {other}")

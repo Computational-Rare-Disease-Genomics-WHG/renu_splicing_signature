@@ -11,13 +11,16 @@ requires-python = ">=3.11"
 authors = [{name = "Alex", email = "alex.blakes@gmail.com"}]
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+dev = ["pytest>=8", "hatchling>=1.26"]
 
 [project.scripts]
 renu-score = "renu_splicing_signature.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/renu_splicing_signature"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/examples", "/tests", "/README.md", "/pyproject.toml", "/.gitignore"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -140,6 +140,17 @@ def test_invalid_details_destination_does_not_truncate_existing_scores(model_fil
     assert output.read_text() == "previous results"
 
 
+def test_directory_details_destination_preserves_previous_scores(model_file, write_rmats, tmp_path):
+    output = tmp_path / "scores.tsv"
+    output.write_text("previous results")
+    details = tmp_path / "details.tsv"
+    details.mkdir()
+    result = run_cli(write_rmats(), "--signature", model_file, "--output", output, "--details", details)
+    assert result.returncode != 0
+    assert output.read_text() == "previous results"
+    assert details.is_dir()
+
+
 def test_help_and_version():
     help_result = run_cli("--help")
     assert help_result.returncode == 0 and "--signature" in help_result.stdout
