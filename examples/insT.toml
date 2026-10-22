@@ -5,6 +5,8 @@ schema_version = 1
 name = "RNU4-2 n.64_65insT six-event signature"
 reference_genome = "GRCh38"
 intercept = -2.927847423
+# Minimum IJC + SJC per sample/event; zero coverage is always missing.
+min_read_depth = 0
 
 [[events]]
 id = "A5SS:CTDSP2:chr12:57827533:57827590:57827551:57827590:57826995:57827097"

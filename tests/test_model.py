@@ -9,6 +9,7 @@ from renu_splicing_signature.model import SignatureError, load_model
 def test_published_default_parameters():
     model = load_model()
     assert model.intercept == -2.927847423
+    assert model.min_read_depth == 0
     assert model.reference_genome == "GRCh38"
     assert [(e.id.split(":")[1], e.strand, e.direction, e.weight) for e in model.events] == [
         ("CTDSP2", "-", -1, 0.825615979283261),
@@ -30,6 +31,22 @@ def test_visible_model_matches_packaged_default():
 def test_toml_controls_intercept(model_file):
     model_file.write_text(model_file.read_text().replace("-2.927847423", "-7.5"))
     assert load_model(model_file).intercept == -7.5
+
+
+def test_missing_minimum_read_depth_defaults_to_zero(model_file):
+    assert load_model(model_file).min_read_depth == 0
+
+
+def test_minimum_read_depth_is_configurable(model_file):
+    model_file.write_text("min_read_depth = 10\n" + model_file.read_text())
+    assert load_model(model_file).min_read_depth == 10
+
+
+@pytest.mark.parametrize("value", ["-1", "1.5", "true", '"10"', "inf", "nan"])
+def test_minimum_read_depth_requires_nonnegative_integer(model_file, value):
+    model_file.write_text(f"min_read_depth = {value}\n" + model_file.read_text())
+    with pytest.raises(SignatureError, match="min_read_depth"):
+        load_model(model_file)
 
 
 @pytest.mark.parametrize("old,new", [

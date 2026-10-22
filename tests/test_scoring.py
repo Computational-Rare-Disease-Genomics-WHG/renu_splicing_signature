@@ -112,3 +112,29 @@ def test_extreme_linear_predictor_is_stable(model_file, write_rmats, intercept, 
     model = replace(load_model(model_file), intercept=intercept)
     result = score_samples(model, read_rmats(write_rmats(), model))
     assert all(r.lasso_prob == expected for r in result.rows)
+
+
+def test_minimum_depth_filters_each_sample_and_control_baseline(model_file, write_rmats, rmats_rows):
+    model_file.write_text("min_read_depth = 5\n" + model_file.read_text())
+    rmats_rows[0][12:16] = ["3", "1", "1,3", "0,2"]
+    rmats_rows[1][12:16] = ["0", "10", "10,5", "0,5"]
+    model = load_model(model_file)
+    result = score_samples(model, read_rmats(write_rmats(), model))
+    assert [row.n_events_used for row in result.rows] == [1, 1, 2]
+    assert result.rows[0].status == "partial"
+    assert result.rows[0].n_zero_coverage_events == 0
+    assert result.rows[0].uniform_sum == pytest.approx(1.5 * math.log(21))
+    assert result.rows[0].weighted_sum == pytest.approx(0.75 * math.log(21))
+    event_details = [d for d in result.details if "CTDSP2" in d.event]
+    assert [d.status for d in event_details] == ["below_min_read_depth", "below_min_read_depth", "used"]
+    assert all(d.control_mean == pytest.approx(math.log(1.4)) for d in event_details)
+    assert event_details[0].ijc == 3 and event_details[0].sjc == 1
+    assert event_details[0].contribution is None
+    assert any("below_min_read_depth" in warning and "cases_1" in warning for warning in result.warnings)
+
+
+def test_minimum_depth_can_make_an_event_uncenterable(model_file, write_rmats):
+    model_file.write_text("min_read_depth = 9\n" + model_file.read_text())
+    model = load_model(model_file)
+    with pytest.raises(SignatureError, match="usable"):
+        score_samples(model, read_rmats(write_rmats(), model))

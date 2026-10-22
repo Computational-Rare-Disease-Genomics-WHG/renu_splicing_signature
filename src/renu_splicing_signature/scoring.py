@@ -70,6 +70,8 @@ def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
             elif pair.ijc == pair.sjc == 0:
                 zero_counts[index] += 1
                 log_ratios.append(None)
+            elif pair.ijc + pair.sjc < model.min_read_depth:
+                log_ratios.append(None)
             else:
                 # log(2*count+1) differs from log(count+0.5) by log(2),
                 # which cancels; integer arithmetic avoids overflow at conversion.
@@ -91,6 +93,8 @@ def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
                 status = "missing_counts"
             elif pair.ijc == pair.sjc == 0:
                 status = "zero_coverage"
+            elif pair.ijc + pair.sjc < model.min_read_depth:
+                status = "below_min_read_depth"
             elif baseline is None:
                 status = "no_control_baseline"
             else:

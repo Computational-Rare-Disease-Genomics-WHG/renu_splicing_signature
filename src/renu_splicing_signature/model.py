@@ -79,6 +79,7 @@ class Model:
     reference_genome: str
     intercept: float
     events: tuple[Event, ...]
+    min_read_depth: int = 0
 
 
 def load_model(path: Path | None = None) -> Model:
@@ -95,6 +96,9 @@ def load_model(path: Path | None = None) -> Model:
         if not isinstance(config.get(field), str) or not config[field].strip():
             raise SignatureError(f"Model {field} must be a nonempty string")
     intercept = _finite_number(config.get("intercept"), "Model intercept")
+    min_read_depth = config.get("min_read_depth", 0)
+    if type(min_read_depth) is not int or min_read_depth < 0:
+        raise SignatureError("Model min_read_depth must be a nonnegative integer")
     definitions = config.get("events")
     if not isinstance(definitions, list) or not definitions:
         raise SignatureError("Model must contain at least one event")
@@ -109,4 +113,4 @@ def load_model(path: Path | None = None) -> Model:
         if any(event.key == previous.key for previous in events):
             raise SignatureError(f"Duplicate model event coordinates: {event.id}")
         events.append(event)
-    return Model(config["name"], config["reference_genome"], intercept, tuple(events))
+    return Model(config["name"], config["reference_genome"], intercept, tuple(events), min_read_depth)

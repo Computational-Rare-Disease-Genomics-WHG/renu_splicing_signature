@@ -156,3 +156,16 @@ def test_help_and_version():
     assert help_result.returncode == 0 and "--signature" in help_result.stdout
     assert "--intercept" not in help_result.stdout
     assert run_cli("--version").stdout.strip() == "renu-score 0.1.0"
+
+
+def test_toml_minimum_depth_controls_scores_and_details(model_file, write_rmats, rmats_rows, tmp_path):
+    model_file.write_text("min_read_depth = 5\n" + model_file.read_text())
+    rmats_rows[0][12:16] = ["3", "1", "1,3", "0,2"]
+    rmats_rows[1][12:16] = ["0", "10", "10,5", "0,5"]
+    details = tmp_path / "details.tsv"
+    result = run_cli(write_rmats(), "--signature", model_file, "--details", details)
+    assert result.returncode == 0, result.stderr
+    rows = parse_tsv(result.stdout)
+    assert rows[0]["n_events_used"] == "1" and rows[0]["status"] == "partial"
+    assert "below_min_read_depth" in result.stderr
+    assert parse_tsv(details.read_text())[0]["status"] == "below_min_read_depth"
