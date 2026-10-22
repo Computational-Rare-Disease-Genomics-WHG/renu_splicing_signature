@@ -4,9 +4,9 @@ A command-line tool accompanying [Dawes et al., A cross-tissue splicing
 signature as a quantitative biomarker for ReNU
 syndrome](https://doi.org/10.64898/2026.09.26.26364077).
 
-Quantify the six-event RNU4-2 n.64_65insT splicing signature from rMATS junction
+Quantifies the six-event RNU4-2 n.64_65insT splicing signature from [rMATS](https://doi.org/10.1038/s41596-023-00944-2) junction
 counts. Reports an unweighted signature score and LASSO `P(case)` for every
-case and control, using the supplied matched controls as the baseline.
+case and control, using the supplied matched controls as a baseline.
 
 ## Install
 
@@ -20,7 +20,7 @@ renu-score --help
 
 ## Input: GRCh38 rMATS A5SS junction counts
 
-**The bundled signature requires GRCh38 coordinates. GRCh37/hg19 input is
+**This tool requires GRCh38 coordinates. GRCh37/hg19 input is
 incompatible. No coordinate conversion or liftover is performed.**
 
 Provide the tab-separated `A5SS.MATS.JC.txt` from rMATS, with both cases and
