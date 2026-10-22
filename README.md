@@ -62,13 +62,13 @@ renu-score examples/A5SS.MATS.JC.txt --output scores.tsv --details events.tsv
 renu-score A5SS.MATS.JC.txt --output scores.tsv
 
 # Group 1 contains controls instead of cases:
-renu-score A5SS.MATS.JC.txt --controls-group 1 --output scores.tsv
+renu-score A5SS.MATS.JC.txt --control-group 1 --output scores.tsv
 
 # Also save the underlying measurements and event contributions:
 renu-score A5SS.MATS.JC.txt --output scores.tsv --details events.tsv
 
 # Supply sample names, one per line in the corresponding rMATS vector order:
-renu-score A5SS.MATS.JC.txt --group1-names case_ids.txt --group2-names control_ids.txt
+renu-score A5SS.MATS.JC.txt --group1-samples case_ids.txt --group2-samples control_ids.txt
 ```
 
 The scores TSV contains:
@@ -97,7 +97,7 @@ configuration. This tool does not train a new splicing signature model.
 To change the configuration, copy the example TOML, edit it, and select it:
 
 ```bash
-renu-score A5SS.MATS.JC.txt --signature my-config.toml --output scores.tsv
+renu-score A5SS.MATS.JC.txt --config my-config.toml --output scores.tsv
 ```
 
 ## References
