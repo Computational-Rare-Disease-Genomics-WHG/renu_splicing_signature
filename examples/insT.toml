@@ -1,0 +1,43 @@
+# Six-event n.64_65insT model. Coordinates/directions/weights: preprint Table S2.
+# https://doi.org/10.64898/2026.09.26.26364077
+# Intercept supplied by Alexander Blakes: intercept_at_1se = -2.927847423.
+schema_version = 1
+name = "RNU4-2 n.64_65insT six-event signature"
+reference_genome = "GRCh38"
+intercept = -2.927847423
+
+[[events]]
+id = "A5SS:CTDSP2:chr12:57827533:57827590:57827551:57827590:57826995:57827097"
+strand = "-"
+direction = -1
+weight = 0.825615979283261
+
+[[events]]
+id = "A5SS:PTBP3:chr9:112297831:112297916:112297840:112297916:112275843:112276013"
+strand = "-"
+direction = -1
+weight = 0.783806558002269
+
+[[events]]
+id = "A5SS:MAP4K4:chr2:101887087:101887261:101887087:101887237:101887777:101887937"
+strand = "+"
+direction = 1
+weight = 0.737422747142889
+
+[[events]]
+id = "A5SS:TOP1:chr20:41113969:41114155:41113969:41114137:41115370:41115439"
+strand = "+"
+direction = -1
+weight = 0.560782708354878
+
+[[events]]
+id = "A5SS:STX16:chr20:58667489:58667608:58667489:58667597:58667986:58668127"
+strand = "+"
+direction = 1
+weight = 0.401105638015341
+
+[[events]]
+id = "A5SS:RPS15A:chr16:18790243:18790334:18790309:18790334:18788980:18789118"
+strand = "-"
+direction = 1
+weight = 0.290736572720099

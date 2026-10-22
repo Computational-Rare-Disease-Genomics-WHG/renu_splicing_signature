@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "renu-splicing-signature"
+version = "0.1.0"
+description = "Quantify the RNU4-2 six-event splicing signature from rMATS junction counts"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{name = "Alex", email = "alex.blakes@gmail.com"}]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+renu-score = "renu_splicing_signature.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/renu_splicing_signature"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
