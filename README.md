@@ -5,9 +5,7 @@ signature as a quantitative biomarker for ReNU
 syndrome](https://doi.org/10.64898/2026.09.26.26364077).
 
 Quantifies the six-event RNU4-2 n.64_65insT splicing signature from
-[rMATS](https://doi.org/10.1038/s41596-023-00944-2) junction counts. Reports an
-unweighted signature score and LASSO `P(case)` for every case and control,
-using the supplied matched controls as a baseline.
+[rMATS](https://doi.org/10.1038/s41596-023-00944-2) junction counts.
 
 ## Install
 
@@ -23,8 +21,8 @@ renu-score --help
 **This tool requires GRCh38 coordinates. GRCh37/hg19 input is
 incompatible. No coordinate conversion or liftover is performed.**
 
-Provide the tab-separated `A5SS.MATS.JC.txt` from rMATS, with both cases and
-matched controls. Use the complete, unfiltered output.
+Provide the tab-separated `A5SS.MATS.JC.txt` from rMATS, including cases and
+controls. Use the complete, unfiltered output.
 
 Required columns (exact spelling):
 
@@ -42,12 +40,12 @@ The other columns are ignored.
 > [!NOTE]
 >
 > - rMATS uses zero-based, half-open coordinates, as in BED format.
->   Contigs with or without a `chr` prefix are accepted. Events are matched on
->   chromosome, strand, and all six coordinate columns above.
+>   This tool accepts contigs with or without a `chr` prefix. Events are matched on
+>   contig, strand, and all six coordinate columns above.
 > - Counts are comma-separated integers in a consistent sample order. Zero
->   counts are allowed. IJC/SJC vectors must have matching lengths, and each
+>   counts are allowed. IJC/SJC columns must have matching lengths, and each
 >   group's size must be constant across rows.
-> - `NA` and empty entries represent missing data.
+> - `NA` and empty entries are used for missing data.
 
 A stub example input is included in
 [examples/A5SS.MATS.JC.txt](examples/A5SS.MATS.JC.txt):
@@ -90,11 +88,11 @@ event status. Missing values appear as `NA`.
 
 ## Configuration
 
-The six splice events and fitted model parameters are bundled with the tool.
+The six splicing events and fitted model parameters are bundled with the tool.
 [examples/insT.toml](examples/insT.toml) is an editable copy of the default
 configuration. This tool does not train a new splicing signature model.
 
-To change the configuration, copy the example TOML, edit it, and select it:
+To change the configuration, copy and edit the example TOML, and use it with the `--config` CLI option:
 
 ```bash
 renu-score A5SS.MATS.JC.txt --config my-config.toml --output scores.tsv
