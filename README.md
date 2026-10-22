@@ -4,13 +4,10 @@ Quantify the six-event RNU4-2 n.64_65insT splicing signature from rMATS junction
 counts. Reports an unweighted signature score and LASSO `P(case)` for every
 case and control, using the supplied matched controls as the baseline.
 
-Using external controls may be possible, but this approach has not been validated.
-We recommend providing matched cases and controls for each analysis.
 
 ## Install
 
-Requires Python 3.11 or later. Install the command in your user environment
-with [uv](https://docs.astral.sh/uv/guides/tools/):
+Install with [uv](https://docs.astral.sh/uv/guides/tools/):
 
 ```bash
 # Replace OWNER/REPOSITORY with the GitHub repository containing this package.
@@ -18,16 +15,10 @@ uv tool install --python 3.11 'git+https://github.com/OWNER/REPOSITORY.git'
 renu-score --help
 ```
 
-The destination GitHub repository has not yet been configured here; the URL
-above is a template. From a local checkout, use `uv tool install .`.
-If the command directory is not on your PATH, run `uv tool update-shell` and
-restart your shell.
-
 ## Input: GRCh38 rMATS A5SS junction counts
 
 **The bundled signature requires GRCh38 coordinates. GRCh37/hg19 input is
-incompatible. No coordinate conversion or liftover is performed.** A custom
-model must use the same reference assembly as its input.
+incompatible. No coordinate conversion or liftover is performed.**
 
 Provide the tab-separated `A5SS.MATS.JC.txt` from rMATS, with both cases and
 matched controls. Use the complete event output, before filtering by P value,
