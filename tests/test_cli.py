@@ -47,6 +47,34 @@ def test_cli_uses_packaged_model_for_complete_example():
     assert float(rows[0]["lasso_prob"]) > float(rows[-1]["lasso_prob"])
 
 
+def test_stem3_selects_separate_signature_on_example(tmp_path):
+    details = tmp_path / "details.tsv"
+    result = run_cli("--example", "--stem3", "--details", details)
+    assert result.returncode == 0, result.stderr
+    rows = parse_tsv(result.stdout)
+    assert all(row["n_events_expected"] == "6" for row in rows)
+    assert not result.stderr
+    assert all(row["n_events_used"] == "6" for row in rows)
+    assert all(row["status"] == "complete" for row in rows)
+    events = {row["event"].split(":")[1] for row in parse_tsv(details.read_text())}
+    assert events == {"GNB1", "KMT2C", "MAP4K4", "CBFB", "TOP1", "CINP"}
+    reference = run_cli("--example", "--config", ROOT / "examples" / "stem3.toml")
+    assert reference.returncode == 0, reference.stderr
+    assert result.stdout == reference.stdout
+
+
+def test_stem3_and_config_are_mutually_exclusive(model_file, tmp_path):
+    output = tmp_path / "scores.tsv"
+    output.write_text("previous scores")
+    result = run_cli(
+        "--example", "--stem3", "--config", model_file, "--output", output
+    )
+    assert result.returncode == 2
+    assert "not allowed" in result.stderr
+    assert result.stdout == ""
+    assert output.read_text() == "previous scores"
+
+
 @pytest.mark.parametrize("write_output", [False, True])
 def test_example_flag_scores_bundled_input(tmp_path, write_output):
     output, details = tmp_path / "scores.tsv", tmp_path / "details.tsv"
@@ -356,6 +384,7 @@ def test_help_and_version():
         "--group1-samples",
         "--group2-samples",
         "--config",
+        "--stem3",
     ):
         assert option in help_result.stdout
     assert "--intercept" not in help_result.stdout

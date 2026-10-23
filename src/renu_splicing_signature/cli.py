@@ -49,10 +49,14 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--details", type=Path, help="optional per-sample, per-event details TSV"
     )
-    parser.add_argument(
+    signature = parser.add_mutually_exclusive_group()
+    signature.add_argument(
         "--config",
         type=Path,
         help="config TOML, specifying signature junctions and model weights",
+    )
+    signature.add_argument(
+        "--stem3", action="store_true", help="use the provisional Stem III signature"
     )
     parser.add_argument(
         "--version", action="version", version=f"renu-score {__version__}"
@@ -131,13 +135,16 @@ def main(argv: list[str] | None = None) -> int:
             else args.rmats
         )
         names_paths = {1: args.group1_samples, 2: args.group2_samples}
+        model_path = args.config or (
+            Path(__file__).parent / "data" / "stem3.toml" if args.stem3 else None
+        )
         outputs = [path for path in (args.output, args.details) if path is not None]
         inputs = [rmats, Path(__file__).parent / "data" / "insT.toml"]
         inputs.extend(
-            path for path in (args.config, *names_paths.values()) if path is not None
+            path for path in (model_path, *names_paths.values()) if path is not None
         )
         _check_output_paths(outputs, inputs)
-        model = load_model(args.config)
+        model = load_model(model_path)
         names = {
             group: path.read_text(encoding="utf-8-sig").splitlines()
             for group, path in names_paths.items()

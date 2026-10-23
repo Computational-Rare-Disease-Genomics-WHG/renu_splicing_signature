@@ -1,0 +1,45 @@
+# Provisional six-event Stem III signature. Coordinates/directions/weights: Table S3.
+# https://doi.org/10.64898/2026.09.26.26364077
+schema_version = 1
+name = "RNU4-2 provisional Stem III six-event signature"
+reference_genome = "GRCh38"
+# Intercept supplied by Alexander Blakes: intercept_at_1se = -6.752413202.
+intercept = -6.752413202
+# Minimum IJC + SJC per sample/event; zero coverage is always missing.
+min_read_depth = 0
+
+[[events]]
+id = "A5SS:GNB1:chr1:1787321:1787437:1787325:1787437:1785285:1787053"
+strand = "-"
+direction = -1
+weight = 4.8105378883953
+
+[[events]]
+id = "A5SS:KMT2C:chr7:152145152:152145295:152145164:152145295:152144712:152144881"
+strand = "-"
+direction = -1
+weight = 3.55266993907258
+
+[[events]]
+id = "A5SS:MAP4K4:chr2:101887087:101887261:101887087:101887237:101887777:101887937"
+strand = "+"
+direction = 1
+weight = 3.30286768231348
+
+[[events]]
+id = "A5SS:CBFB:chr16:67082212:67082339:67082212:67082308:67098709:67101058"
+strand = "+"
+direction = 1
+weight = 0.787522943329501
+
+[[events]]
+id = "A5SS:TOP1:chr20:41113969:41114155:41113969:41114137:41115370:41115439"
+strand = "+"
+direction = -1
+weight = 0.782071984537327
+
+[[events]]
+id = "A5SS:CINP:chr14:102355767:102355897:102355771:102355897:102349918:102350048"
+strand = "-"
+direction = -1
+weight = 0.119777511853926
