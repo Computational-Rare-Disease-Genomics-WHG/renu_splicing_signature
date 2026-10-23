@@ -13,7 +13,7 @@ six-event Stem III signature from
 Install with [uv](https://docs.astral.sh/uv/guides/tools/):
 
 ```bash
-uv tool install --python 3.11 'git+https://github.com/Computational-Rare-Disease-Genomics-WHG/renu_splicing_signature.git'
+uv tool install --python '>=3.11' 'git+https://github.com/Computational-Rare-Disease-Genomics-WHG/renu_splicing_signature.git'
 
 renu-score --help
 ```
