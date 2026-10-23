@@ -20,7 +20,7 @@ renu-score = "renu_splicing_signature.cli:main"
 packages = ["src/renu_splicing_signature"]
 
 [tool.hatch.build.targets.sdist]
-include = ["/src", "/examples", "/tests", "/README.md", "/pyproject.toml", "/.gitignore"]
+include = ["/src", "/config", "/examples", "/tests", "/README.md", "/pyproject.toml", "/.gitignore"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -75,12 +75,12 @@ The optional `--details` output offers more granular information for every sampl
 This tool does not train a new splicing signature model.
 
 The six splicing events and fitted model parameters are bundled with the tool.
-[examples/insT.toml](examples/insT.toml) is an editable copy of the default
+[config/insT.toml](config/insT.toml) is an editable copy of the default
 configuration.
 
 Use `--stem3` to select the separate provisional Stem III signature, with the
 six events and fitted weights from supplementary Table S3 and its own intercept.
-[examples/stem3.toml](examples/stem3.toml) is an editable copy. `--stem3` and
+[config/stem3.toml](config/stem3.toml) is an editable copy. `--stem3` and
 `--config` are mutually exclusive; to customize Stem III, edit this copy and pass
 it with `--config`. The synthetic example input includes all events for both
 signatures, so `--example --stem3` produces complete Stem III scores.

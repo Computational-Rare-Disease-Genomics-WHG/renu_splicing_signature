@@ -58,7 +58,7 @@ def test_stem3_selects_separate_signature_on_example(tmp_path):
     assert all(row["status"] == "complete" for row in rows)
     events = {row["event"].split(":")[1] for row in parse_tsv(details.read_text())}
     assert events == {"GNB1", "KMT2C", "MAP4K4", "CBFB", "TOP1", "CINP"}
-    reference = run_cli("--example", "--config", ROOT / "examples" / "stem3.toml")
+    reference = run_cli("--example", "--config", ROOT / "config" / "stem3.toml")
     assert reference.returncode == 0, reference.stderr
     assert result.stdout == reference.stdout
 

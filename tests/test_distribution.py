@@ -19,7 +19,7 @@ def test_sdist_ships_model_and_examples_without_workspace_artifacts(tmp_path):
     project.mkdir()
     for name in ("pyproject.toml", "README.md", ".gitignore"):
         shutil.copy2(root / name, project / name)
-    for name in ("src", "examples"):
+    for name in ("src", "config", "examples"):
         shutil.copytree(root / name, project / name)
     for name in (".superpowers/sdd", ".venv", ".aws"):
         directory = project / name
@@ -44,11 +44,11 @@ def test_sdist_ships_model_and_examples_without_workspace_artifacts(tmp_path):
     assert any(
         str(p).endswith("src/renu_splicing_signature/data/insT.toml") for p in paths
     )
-    assert any(str(p).endswith("examples/insT.toml") for p in paths)
+    assert any(str(p).endswith("config/insT.toml") for p in paths)
     assert any(
         str(p).endswith("src/renu_splicing_signature/data/stem3.toml") for p in paths
     )
-    assert any(str(p).endswith("examples/stem3.toml") for p in paths)
+    assert any(str(p).endswith("config/stem3.toml") for p in paths)
     assert any(str(p).endswith("examples/A5SS.MATS.JC.txt") for p in paths)
     assert not any(
         {".superpowers", ".venv", ".aws"}.intersection(p.parts) for p in paths
