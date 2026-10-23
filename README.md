@@ -38,16 +38,16 @@ renu-score --example
 # Provide the rMATS data for your samples; write output to a file
 renu-score A5SS.MATS.JC.txt --output scores.tsv
 
-# Use the provisional Stem III signature:
+# Use the provisional Stem III signature
 renu-score A5SS.MATS.JC.txt --stem3 --output stem3-scores.tsv
 
-# rMATS group 1 contains controls instead of cases:
+# rMATS group 1 contains controls instead of cases
 renu-score A5SS.MATS.JC.txt --control-group 1 --output scores.tsv
 
-# Also report the underlying event contributions:
+# Also report the underlying event contributions
 renu-score A5SS.MATS.JC.txt --output scores.tsv --details events.tsv
 
-# Supply sample names, one per line. The order should match the order of samples in the rMATS input:
+# Supply sample names, one per line. The order should match the order of samples in the rMATS input
 renu-score A5SS.MATS.JC.txt --group1-samples case_ids.txt --group2-samples control_ids.txt
 ```
 
@@ -72,9 +72,8 @@ The optional `--details` output offers more granular information for every sampl
 
 This tool does not train a new splicing signature model.
 
-The six splicing events and fitted model parameters are bundled with the tool.
-[config/insT.toml](config/insT.toml) is an editable copy of the default
-configuration.
+The six splicing events and fitted model parameters for the n.64_65insT signature are bundled with the tool in 
+[config/insT.toml](config/insT.toml).
 
 Use `--stem3` to test the provisional Stem III signature, bundled in
 [config/stem3.toml](config/stem3.toml).
