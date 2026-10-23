@@ -23,7 +23,7 @@ renu-score --help
 Requires the unfiltered `A5SS.MATS.JC.txt` output from rMATS.
 
 A stub example input is included in
-[examples/A5SS.MATS.JC.txt](examples/A5SS.MATS.JC.txt):
+[examples/A5SS.MATS.JC.txt](examples/A5SS.MATS.JC.txt).
 
 > [!NOTE]
 > - This tool requires GRCh38 coordinates. GRCh37/hg19 input is
@@ -31,8 +31,6 @@ A stub example input is included in
 > - This tool accepts contigs with or without a `chr` prefix.
 
 ## Usage
-
-Run on the bundled example without providing an input file:
 
 ```bash
 # Test on the bundled example data
@@ -55,6 +53,7 @@ renu-score A5SS.MATS.JC.txt --group1-samples case_ids.txt --group2-samples contr
 ```
 
 ## Output
+
 The default output contains:
 
 | Column                               | Meaning                                      |
@@ -78,14 +77,10 @@ The six splicing events and fitted model parameters are bundled with the tool.
 [config/insT.toml](config/insT.toml) is an editable copy of the default
 configuration.
 
-Use `--stem3` to select the separate provisional Stem III signature, with the
-six events and fitted weights from supplementary Table S3 and its own intercept.
-[config/stem3.toml](config/stem3.toml) is an editable copy. `--stem3` and
-`--config` are mutually exclusive; to customize Stem III, edit this copy and pass
-it with `--config`. The synthetic example input includes all events for both
-signatures, so `--example --stem3` produces complete Stem III scores.
+Use `--stem3` to test the provisional Stem III signature, bundled in
+[config/stem3.toml](config/stem3.toml).
 
-To change the configuration, copy and edit the example TOML, and use it with the `--config` CLI option:
+To customise the signature, copy and edit the example TOML and use the `--config` CLI option:
 
 ```bash
 renu-score A5SS.MATS.JC.txt --config my-config.toml --output scores.tsv
