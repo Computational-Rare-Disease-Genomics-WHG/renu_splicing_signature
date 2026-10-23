@@ -21,8 +21,12 @@ def _parser() -> argparse.ArgumentParser:
         allow_abbrev=False,
         description="Quantify the RNU4-2 splicing signature from GRCh38 A5SS rMATS JC counts.",
     )
-    parser.add_argument(
-        "rmats", type=Path, help="A5SS.MATS.JC.txt for cases and controls"
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument(
+        "rmats", nargs="?", type=Path, help="A5SS.MATS.JC.txt for cases and controls"
+    )
+    source.add_argument(
+        "--example", action="store_true", help="run on the bundled example input"
     )
     parser.add_argument("--output", type=Path, help="scores TSV (default: stdout)")
     parser.add_argument(
@@ -121,9 +125,14 @@ def _write_files(outputs: list[tuple[Path, str]]) -> None:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
+        rmats = (
+            Path(__file__).parent / "data" / "A5SS.MATS.JC.txt"
+            if args.example
+            else args.rmats
+        )
         names_paths = {1: args.group1_samples, 2: args.group2_samples}
         outputs = [path for path in (args.output, args.details) if path is not None]
-        inputs = [args.rmats, Path(__file__).parent / "data" / "insT.toml"]
+        inputs = [rmats, Path(__file__).parent / "data" / "insT.toml"]
         inputs.extend(
             path for path in (args.config, *names_paths.values()) if path is not None
         )
@@ -134,7 +143,7 @@ def main(argv: list[str] | None = None) -> int:
             for group, path in names_paths.items()
             if path is not None
         }
-        dataset = read_rmats(args.rmats, model, args.control_group, names)
+        dataset = read_rmats(rmats, model, args.control_group, names)
         result = score_samples(model, dataset)
         scores_text = _tsv(result.rows, ScoreRow)
         destinations = []

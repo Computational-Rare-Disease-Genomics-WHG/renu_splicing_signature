@@ -10,6 +10,8 @@ import tarfile
 import venv
 from pathlib import Path
 
+import pytest
+
 
 def test_sdist_ships_model_and_examples_without_workspace_artifacts(tmp_path):
     root = Path(__file__).resolve().parents[1]
@@ -49,7 +51,8 @@ def test_sdist_ships_model_and_examples_without_workspace_artifacts(tmp_path):
     )
 
 
-def test_installed_wheel_scores_outside_checkout_with_bundled_model(tmp_path):
+@pytest.mark.parametrize("example", [False, True])
+def test_installed_wheel_scores_outside_checkout_with_bundled_model(tmp_path, example):
     root = Path(__file__).resolve().parents[1]
     wheel_dir = tmp_path / "dist"
     wheel_dir.mkdir()
@@ -90,11 +93,15 @@ def test_installed_wheel_scores_outside_checkout_with_bundled_model(tmp_path):
         capture_output=True,
         text=True,
     )
-    input_path = tmp_path / "A5SS.MATS.JC.txt"
-    shutil.copy2(root / "examples" / "A5SS.MATS.JC.txt", input_path)
+    if example:
+        input_args = ["--example"]
+    else:
+        input_path = tmp_path / "A5SS.MATS.JC.txt"
+        shutil.copy2(root / "examples" / "A5SS.MATS.JC.txt", input_path)
+        input_args = [str(input_path)]
     details = tmp_path / "details.tsv"
     result = subprocess.run(
-        [str(executable), str(input_path), "--details", str(details)],
+        [str(executable), *input_args, "--details", str(details)],
         check=False,
         cwd=tmp_path,
         env=env,

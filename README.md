@@ -31,6 +31,15 @@ A stub example input is included in
 
 ## Usage
 
+Run on the bundled example without providing an input file:
+
+```bash
+renu-score --example
+renu-score --example --output scores.tsv --details events.tsv
+```
+
+Use either `--example` or an input file, with the same output and configuration options.
+
 ```bash
 renu-score A5SS.MATS.JC.txt --output scores.tsv
 

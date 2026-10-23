@@ -47,6 +47,43 @@ def test_cli_uses_packaged_model_for_complete_example():
     assert float(rows[0]["lasso_prob"]) > float(rows[-1]["lasso_prob"])
 
 
+@pytest.mark.parametrize("write_output", [False, True])
+def test_example_flag_scores_bundled_input(tmp_path, write_output):
+    output, details = tmp_path / "scores.tsv", tmp_path / "details.tsv"
+    extra = ["--output", output] if write_output else []
+    result = run_cli("--example", "--details", details, *extra)
+    assert result.returncode == 0, result.stderr
+    assert not result.stderr
+    scores = output.read_text() if write_output else result.stdout
+    reference = run_cli(ROOT / "examples" / "A5SS.MATS.JC.txt")
+    assert reference.returncode == 0, reference.stderr
+    assert scores == reference.stdout
+    assert len(parse_tsv(scores)) == 4
+    assert len(parse_tsv(details.read_text())) == 24
+    if write_output:
+        assert result.stdout == ""
+
+
+def test_example_flag_rejects_explicit_input_without_writing_output(tmp_path):
+    output = tmp_path / "scores.tsv"
+    output.write_text("previous scores")
+    result = run_cli(
+        ROOT / "examples" / "A5SS.MATS.JC.txt", "--example", "--output", output
+    )
+    assert result.returncode == 2
+    assert "not allowed" in result.stderr
+    assert result.stdout == ""
+    assert output.read_text() == "previous scores"
+
+
+def test_cli_requires_input_or_example():
+    result = run_cli()
+    assert result.returncode == 2
+    assert "required" in result.stderr
+    assert "--example" in result.stderr
+    assert result.stdout == ""
+
+
 def test_partial_warnings_do_not_pollute_stdout(model_file, write_rmats, rmats_rows):
     result = run_cli(write_rmats(rmats_rows[:1]), "--config", model_file)
     assert result.returncode == 0
@@ -314,6 +351,7 @@ def test_help_and_version():
     help_result = run_cli("--help")
     assert help_result.returncode == 0
     for option in (
+        "--example",
         "--control-group",
         "--group1-samples",
         "--group2-samples",
