@@ -17,43 +17,17 @@ uv tool install --python 3.11 'git+https://github.com/Computational-Rare-Disease
 renu-score --help
 ```
 
-## Input: GRCh38 rMATS A5SS junction counts
+## Input
 
-**This tool requires GRCh38 coordinates. GRCh37/hg19 input is
-incompatible. No coordinate conversion or liftover is performed.**
-
-Provide the tab-separated `A5SS.MATS.JC.txt` from rMATS, including cases and
-controls. Use the complete, unfiltered output.
-
-Required columns (exact spelling):
-
-| Columns                              | Meaning                                                          |
-| ------------------------------------ | ---------------------------------------------------------------- |
-| `chr`, `strand`                      | Chromosome and strand                                            |
-| `longExonStart_0base`, `longExonEnd` | Long exon start/end                                              |
-| `shortES`, `shortEE`                 | Short exon start/end                                             |
-| `flankingES`, `flankingEE`           | Flanking exon start/end                                          |
-| `IJC_SAMPLE_1`, `SJC_SAMPLE_1`       | Group 1 inclusion/skipping junction counts (cases by default)    |
-| `IJC_SAMPLE_2`, `SJC_SAMPLE_2`       | Group 2 inclusion/skipping junction counts (controls by default) |
-
-The other columns are ignored.
-
-> [!NOTE]
->
-> - rMATS uses zero-based, half-open coordinates, as in BED format.
->   This tool accepts contigs with or without a `chr` prefix. Events are matched on
->   contig, strand, and all six coordinate columns above.
-> - Counts are comma-separated integers in a consistent sample order. Zero
->   counts are allowed. IJC/SJC columns must have matching lengths, and each
->   group's size must be constant across rows.
-> - `NA` and empty entries are used for missing data.
+Requires the unfiltered `A5SS.MATS.JC.txt` output from rMATS.
 
 A stub example input is included in
 [examples/A5SS.MATS.JC.txt](examples/A5SS.MATS.JC.txt):
 
-```bash
-renu-score examples/A5SS.MATS.JC.txt --output scores.tsv --details events.tsv
-```
+> [!NOTE]
+> - This tool requires GRCh38 coordinates. GRCh37/hg19 input is
+> incompatible. No coordinate conversion or liftover is performed.
+> - This tool accepts contigs with or without a `chr` prefix.
 
 ## Usage
 
@@ -63,10 +37,10 @@ renu-score A5SS.MATS.JC.txt --output scores.tsv
 # Group 1 contains controls instead of cases:
 renu-score A5SS.MATS.JC.txt --control-group 1 --output scores.tsv
 
-# Also save the underlying measurements and event contributions:
+# Also report the underlying event contributions:
 renu-score A5SS.MATS.JC.txt --output scores.tsv --details events.tsv
 
-# Supply sample names, one per line in the corresponding rMATS vector order:
+# Supply sample names, one per line. The order should match the order of samples in the rMATS input:
 renu-score A5SS.MATS.JC.txt --group1-samples case_ids.txt --group2-samples control_ids.txt
 ```
 
@@ -81,17 +55,17 @@ The scores TSV contains:
 | `lasso_prob`                         | LASSO `P(case)`                              |
 | `n_events_used`, `n_events_expected` | Usable and expected events per sample        |
 | `n_zero_coverage_events`             | Events with IJC=SJC=0 in this sample         |
-| `status`                             | `complete`, `partial`, or `unavailable`      |
+| `status`                             | Status of splicing signature: `complete`, `partial`, or `unavailable`      |
 
-The optional `--details` TSV includes one row for every sample/event pair:
-counts, log ratio, control mean, direction, weight, both contributions, and
-event status. Missing values appear as `NA`.
+The optional `--details` TSV offers more granular information for every sample/event pair.
 
 ## Configuration
 
+This tool does not train a new splicing signature model.
+
 The six splicing events and fitted model parameters are bundled with the tool.
 [examples/insT.toml](examples/insT.toml) is an editable copy of the default
-configuration. This tool does not train a new splicing signature model.
+configuration.
 
 To change the configuration, copy and edit the example TOML, and use it with the `--config` CLI option:
 
