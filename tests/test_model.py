@@ -32,9 +32,27 @@ def test_published_default_parameters():
 
 
 def test_visible_model_matches_packaged_default():
-    example = Path(__file__).resolve().parents[1] / "examples" / "insT.toml"
+    example = Path(__file__).resolve().parents[1] / "config" / "insT.toml"
     assert load_model(example) == load_model()
     assert tomllib.loads(example.read_text())["schema_version"] == 1
+
+
+def test_published_stem3_parameters_and_editable_copy():
+    root = Path(__file__).resolve().parents[1]
+    model = load_model(root / "src/renu_splicing_signature/data/stem3.toml")
+    assert model == load_model(root / "config/stem3.toml")
+    assert model.intercept == -6.752413202
+    assert model.reference_genome == "GRCh38"
+    assert [
+        (e.id.split(":")[1], e.strand, e.direction, e.weight) for e in model.events
+    ] == [
+        ("GNB1", "-", -1, 4.8105378883953),
+        ("KMT2C", "-", -1, 3.55266993907258),
+        ("MAP4K4", "+", 1, 3.30286768231348),
+        ("CBFB", "+", 1, 0.787522943329501),
+        ("TOP1", "+", -1, 0.782071984537327),
+        ("CINP", "-", -1, 0.119777511853926),
+    ]
 
 
 def test_toml_controls_intercept(model_file):

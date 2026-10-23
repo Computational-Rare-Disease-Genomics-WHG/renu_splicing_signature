@@ -10,6 +10,8 @@ import tarfile
 import venv
 from pathlib import Path
 
+import pytest
+
 
 def test_sdist_ships_model_and_examples_without_workspace_artifacts(tmp_path):
     root = Path(__file__).resolve().parents[1]
@@ -17,7 +19,7 @@ def test_sdist_ships_model_and_examples_without_workspace_artifacts(tmp_path):
     project.mkdir()
     for name in ("pyproject.toml", "README.md", ".gitignore"):
         shutil.copy2(root / name, project / name)
-    for name in ("src", "examples"):
+    for name in ("src", "config", "examples"):
         shutil.copytree(root / name, project / name)
     for name in (".superpowers/sdd", ".venv", ".aws"):
         directory = project / name
@@ -42,14 +44,22 @@ def test_sdist_ships_model_and_examples_without_workspace_artifacts(tmp_path):
     assert any(
         str(p).endswith("src/renu_splicing_signature/data/insT.toml") for p in paths
     )
-    assert any(str(p).endswith("examples/insT.toml") for p in paths)
+    assert any(str(p).endswith("config/insT.toml") for p in paths)
+    assert any(
+        str(p).endswith("src/renu_splicing_signature/data/stem3.toml") for p in paths
+    )
+    assert any(str(p).endswith("config/stem3.toml") for p in paths)
     assert any(str(p).endswith("examples/A5SS.MATS.JC.txt") for p in paths)
     assert not any(
         {".superpowers", ".venv", ".aws"}.intersection(p.parts) for p in paths
     )
 
 
-def test_installed_wheel_scores_outside_checkout_with_bundled_model(tmp_path):
+@pytest.mark.parametrize("example", [False, True])
+@pytest.mark.parametrize("stem3", [False, True])
+def test_installed_wheel_scores_outside_checkout_with_bundled_model(
+    tmp_path, example, stem3
+):
     root = Path(__file__).resolve().parents[1]
     wheel_dir = tmp_path / "dist"
     wheel_dir.mkdir()
@@ -90,11 +100,16 @@ def test_installed_wheel_scores_outside_checkout_with_bundled_model(tmp_path):
         capture_output=True,
         text=True,
     )
-    input_path = tmp_path / "A5SS.MATS.JC.txt"
-    shutil.copy2(root / "examples" / "A5SS.MATS.JC.txt", input_path)
+    if example:
+        input_args = ["--example"]
+    else:
+        input_path = tmp_path / "A5SS.MATS.JC.txt"
+        shutil.copy2(root / "examples" / "A5SS.MATS.JC.txt", input_path)
+        input_args = [str(input_path)]
     details = tmp_path / "details.tsv"
+    signature_args = ["--stem3"] if stem3 else []
     result = subprocess.run(
-        [str(executable), str(input_path), "--details", str(details)],
+        [str(executable), *input_args, *signature_args, "--details", str(details)],
         check=False,
         cwd=tmp_path,
         env=env,
@@ -118,3 +133,7 @@ def test_installed_wheel_scores_outside_checkout_with_bundled_model(tmp_path):
         detail_rows = list(csv.DictReader(handle, delimiter="\t"))
     assert len(detail_rows) == 24
     assert all(row["status"] == "used" for row in detail_rows)
+    if stem3:
+        assert {row["event"].split(":")[1] for row in detail_rows} == {
+            "GNB1", "KMT2C", "MAP4K4", "CBFB", "TOP1", "CINP"
+        }
