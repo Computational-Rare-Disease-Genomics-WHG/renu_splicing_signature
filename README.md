@@ -4,8 +4,7 @@ A command-line tool accompanying [Dawes et al., A cross-tissue splicing
 signature as a quantitative biomarker for ReNU
 syndrome](https://doi.org/10.64898/2026.09.26.26364077).
 
-Quantifies the six-event RNU4-2 n.64_65insT splicing signature or the provisional
-six-event Stem III signature from
+Quantifies the six-event RNU4-2 n.64_65insT splicing signature from
 [rMATS](https://doi.org/10.1038/s41596-023-00944-2) junction counts.
 
 ## Install
