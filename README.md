@@ -29,6 +29,14 @@ A stub example input is included in
 > incompatible. No coordinate conversion or liftover is performed.
 > - This tool accepts contigs with or without a `chr` prefix.
 
+> [!NOTE]
+> The tool takes no account of rMATS statistical outputs, but does
+> require the output from two rMATS “sample groups”
+> (`--s1` and `--s2` or `--b1` and `--b2`). **The minimum
+> number of samples required is therefore one “case” and one “control”.**
+> The "case" and "control" labels are arbitrary - a ReNU syndrome
+> sample could be included among the "controls", for example.
+
 ## Usage
 
 ```bash
