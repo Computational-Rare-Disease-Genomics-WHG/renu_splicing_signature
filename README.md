@@ -13,8 +13,18 @@ Install with [uv](https://docs.astral.sh/uv/guides/tools/):
 
 ```bash
 uv tool install --python '>=3.11' 'git+https://github.com/Computational-Rare-Disease-Genomics-WHG/renu_splicing_signature.git'
+```
 
+Test the installation:
+
+```bash
 renu-score --help
+```
+
+Test run on bundled example data:
+
+```bash
+renu-score --example
 ```
 
 ## Input
@@ -27,15 +37,11 @@ A stub example input is included in
 > [!NOTE]
 > - This tool requires GRCh38 coordinates. GRCh37/hg19 input is
 > incompatible. No coordinate conversion or liftover is performed.
-> - This tool accepts contigs with or without a `chr` prefix.
 
 ## Usage
 
 ```bash
-# Test on the bundled example data
-renu-score --example
-
-# Provide the rMATS data for your samples; write output to a file
+# Provide the rMATS input data; write output to a file
 renu-score A5SS.MATS.JC.txt --output scores.tsv
 
 # Use the provisional Stem III signature:
