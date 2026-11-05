@@ -205,7 +205,7 @@ def test_details_preserve_observed_partner_of_missing_count(
     detail = parse_tsv(details.read_text())[0]
     assert (detail["ijc"], detail["sjc"]) == (ijc, sjc)
     assert detail["status"] == "missing_counts"
-    assert detail["contribution"] == "NA"
+    assert detail["delta_logit_psi_direction"] == "NA"
     score = parse_tsv(result.stdout)[0]
     assert score["n_events_used"] == "1"
     assert float(score["weighted_sum"]) == pytest.approx(0.75 * math.log(9))
@@ -237,6 +237,8 @@ def test_details_report_signed_and_direction_adjusted_logit_psi(
     )
     assert len(rows) == len(expected)
     for row, multiples in zip(rows, expected):
+        assert "contribution" not in row
+        assert "weighted_contribution" not in row
         for column, multiple in zip(columns, multiples):
             assert float(row[column]) == pytest.approx(multiple * math.log(9))
 
@@ -457,7 +459,7 @@ def test_help_and_version():
     ):
         assert option in help_result.stdout
     assert "--intercept" not in help_result.stdout
-    assert run_cli("--version").stdout.strip() == "renu-score 0.2.0"
+    assert run_cli("--version").stdout.strip() == "renu-score 0.2.1"
 
 
 def test_toml_minimum_depth_controls_scores_and_details(
