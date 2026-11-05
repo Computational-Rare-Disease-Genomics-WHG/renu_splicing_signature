@@ -45,22 +45,30 @@ A stub example input is included in
 > - This tool requires GRCh38 coordinates. GRCh37/hg19 input is
 > incompatible.
 
+> [!NOTE]
+> The tool takes no account of rMATS statistical outputs, but does
+> require the output from two rMATS “sample groups”
+> (`--s1` and `--s2` or `--b1` and `--b2`). **The minimum
+> number of samples required is therefore one “case” and one “control”.**
+> The "case" and "control" labels are arbitrary - a ReNU syndrome
+> sample could be included among the "controls", for example.
+
 ## Usage
 
 ```bash
 # Provide the rMATS input data; write output to a file
 renu-score A5SS.MATS.JC.txt --output scores.tsv
 
-# Use the provisional Stem III signature:
+# Use the provisional Stem III signature
 renu-score A5SS.MATS.JC.txt --stem3 --output stem3-scores.tsv
 
-# rMATS group 1 contains controls instead of cases:
+# rMATS group 1 contains controls instead of cases
 renu-score A5SS.MATS.JC.txt --control-group 1 --output scores.tsv
 
-# Also report the underlying event contributions:
+# Also report the underlying event contributions
 renu-score A5SS.MATS.JC.txt --output scores.tsv --details events.tsv
 
-# Supply sample names, one per line. The order should match the order of samples in the rMATS input:
+# Supply sample names, one per line. The order should match the order of samples in the rMATS input
 renu-score A5SS.MATS.JC.txt --group1-samples case_ids.txt --group2-samples control_ids.txt
 ```
 
@@ -85,9 +93,8 @@ The optional `--details` output offers more granular information for every sampl
 
 This tool does not train a new splicing signature model.
 
-The six splicing events and fitted model parameters are bundled with the tool.
-[config/insT.toml](config/insT.toml) is an editable copy of the default
-configuration.
+The six splicing events and fitted model parameters for the n.64_65insT signature are bundled with the tool in 
+[config/insT.toml](config/insT.toml).
 
 Use `--stem3` to test the provisional Stem III signature, bundled in
 [config/stem3.toml](config/stem3.toml).
