@@ -89,6 +89,22 @@ The default output contains:
 
 The optional `--details` output offers more granular information for every sample/event pair.
 
+| Column | Meaning |
+| ------ | ------- |
+| `logit_psi` | Natural log of `(IJC + 0.5) / (SJC + 0.5)`; same as `log_ratio` |
+| `delta_logit_psi` | `logit_psi` minus the mean logit across usable controls (`control_mean`) |
+| `delta_logit_psi_weighted` | `delta_logit_psi` multiplied by the event's model weight |
+| `delta_logit_psi_direction` | `direction` multiplied by `delta_logit_psi`; same as `contribution` |
+| `delta_logit_psi_direction_weighted` | `delta_logit_psi_direction` multiplied by the event's model weight |
+
+These statistics use pseudocount-adjusted junction counts rather than rMATS's
+reported PSI. The `delta_logit_psi` and `delta_logit_psi_weighted` columns retain
+the inclusion/skipping direction. The two direction-adjusted columns apply the
+signature's `direction`, matching `contribution` and `weighted_contribution`.
+Unusable measurements are reported as `NA`.
+If an event has no usable controls, its logit is still reported for usable
+samples, but all delta statistics are `NA`.
+
 ## Configuration
 
 This tool does not train a new splicing signature model.

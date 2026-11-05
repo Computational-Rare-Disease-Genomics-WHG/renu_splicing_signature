@@ -37,6 +37,11 @@ class DetailRow:
     contribution: float | None
     weighted_contribution: float | None
     status: str
+    logit_psi: float | None
+    delta_logit_psi: float | None
+    delta_logit_psi_weighted: float | None
+    delta_logit_psi_direction: float | None
+    delta_logit_psi_direction_weighted: float | None
 
 
 @dataclass
@@ -102,12 +107,15 @@ def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
         ):
             pair = counts[index] if counts is not None else None
             contribution = weighted_contribution = None
+            delta_logit_psi = delta_logit_psi_weighted = None
             if status == "zero_coverage":
                 zero_counts[index] += 1
             if status == "used" and baseline is None:
                 status = "no_control_baseline"
             if status == "used":
-                contribution = event.direction * (log_ratio - baseline)
+                delta_logit_psi = log_ratio - baseline
+                delta_logit_psi_weighted = event.weight * delta_logit_psi
+                contribution = event.direction * delta_logit_psi
                 weighted_contribution = event.weight * contribution
                 if not math.isfinite(weighted_contribution):
                     raise SignatureError(
@@ -132,6 +140,11 @@ def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
                     contribution,
                     weighted_contribution,
                     status,
+                    log_ratio,
+                    delta_logit_psi,
+                    delta_logit_psi_weighted,
+                    contribution,
+                    weighted_contribution,
                 )
             )
         for status, names in missing_by_status.items():
