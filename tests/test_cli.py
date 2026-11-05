@@ -457,7 +457,7 @@ def test_help_and_version():
     ):
         assert option in help_result.stdout
     assert "--intercept" not in help_result.stdout
-    assert run_cli("--version").stdout.strip() == "renu-score 0.1.0"
+    assert run_cli("--version").stdout.strip() == "renu-score 0.2.0"
 
 
 def test_toml_minimum_depth_controls_scores_and_details(
