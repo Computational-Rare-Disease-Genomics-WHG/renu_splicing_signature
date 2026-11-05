@@ -35,10 +35,10 @@ A stub example input is included in
 [examples/A5SS.MATS.JC.txt](examples/A5SS.MATS.JC.txt).
 
 > [!IMPORTANT]
-> [Dawes et al.](https://doi.org/10.64898/2026.09.26.26364077) defined the splicing 
-> signature with rMATS-turbo (v4.3.0) with the following arguments: 
+> [Dawes et al.](https://doi.org/10.64898/2026.09.26.26364077) defined the splicing
+> signature with rMATS-turbo (v4.3.0) with the following arguments:
 > --libType fr-firststrand, --anchorLength 1, and --novelSS. The signature was developed
-> on the GENCODE v49 and GENCODE v46 annotations. We suggest that users match these 
+> on the GENCODE v49 and GENCODE v46 annotations. We suggest that users match these
 > settings to enable direct comparisons between samples.
 
 > [!NOTE]
@@ -93,7 +93,7 @@ The optional `--details` output offers more granular information for every sampl
 
 This tool does not train a new splicing signature model.
 
-The six splicing events and fitted model parameters for the n.64_65insT signature are bundled with the tool in 
+The six splicing events and fitted model parameters for the n.64_65insT signature are bundled with the tool in
 [config/insT.toml](config/insT.toml).
 
 Use `--stem3` to test the provisional Stem III signature, bundled in
