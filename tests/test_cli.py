@@ -66,9 +66,7 @@ def test_stem3_selects_separate_signature_on_example(tmp_path):
 def test_stem3_and_config_are_mutually_exclusive(model_file, tmp_path):
     output = tmp_path / "scores.tsv"
     output.write_text("previous scores")
-    result = run_cli(
-        "--example", "--stem3", "--config", model_file, "--output", output
-    )
+    result = run_cli("--example", "--stem3", "--config", model_file, "--output", output)
     assert result.returncode == 2
     assert "not allowed" in result.stderr
     assert result.stdout == ""
@@ -211,6 +209,77 @@ def test_details_preserve_observed_partner_of_missing_count(
     score = parse_tsv(result.stdout)[0]
     assert score["n_events_used"] == "1"
     assert float(score["weighted_sum"]) == pytest.approx(0.75 * math.log(9))
+
+
+def test_details_report_signed_and_direction_adjusted_logit_psi(
+    model_file, write_rmats, tmp_path
+):
+    details = tmp_path / "details.tsv"
+    result = run_cli(write_rmats(), "--config", model_file, "--details", details)
+    assert result.returncode == 0, result.stderr
+    rows = parse_tsv(details.read_text())
+    # Hand-calculated multiples of ln(9), including both event directions
+    # and the individual controls (centering uses their mean logit).
+    expected = [
+        (1, 1.5, 3, 1.5, 3),
+        (-1, -0.5, -1, -0.5, -1),
+        (0, 0.5, 1, 0.5, 1),
+        (-1, -1.5, -0.75, 1.5, 0.75),
+        (1, 0.5, 0.25, -0.5, -0.25),
+        (0, -0.5, -0.25, 0.5, 0.25),
+    ]
+    columns = (
+        "logit_psi",
+        "delta_logit_psi",
+        "delta_logit_psi_weighted",
+        "delta_logit_psi_direction",
+        "delta_logit_psi_direction_weighted",
+    )
+    assert len(rows) == len(expected)
+    for row, multiples in zip(rows, expected):
+        for column, multiple in zip(columns, multiples):
+            assert float(row[column]) == pytest.approx(multiple * math.log(9))
+
+
+@pytest.mark.parametrize(
+    "reason",
+    [
+        "missing_counts",
+        "zero_coverage",
+        "below_min_read_depth",
+        "absent_from_file",
+        "no_control_baseline",
+    ],
+)
+def test_details_logit_statistics_respect_missingness(
+    model_file, write_rmats, rmats_rows, tmp_path, reason
+):
+    if reason == "missing_counts":
+        rmats_rows[0][12] = "NA"
+    elif reason == "zero_coverage":
+        rmats_rows[0][12:14] = ["0", "0"]
+    elif reason == "below_min_read_depth":
+        model_file.write_text("min_read_depth = 5\n" + model_file.read_text())
+    elif reason == "absent_from_file":
+        rmats_rows.pop(0)
+    else:
+        rmats_rows[0][14:16] = ["0,0", "0,0"]
+    details = tmp_path / "details.tsv"
+    result = run_cli(write_rmats(), "--config", model_file, "--details", details)
+    assert result.returncode == 0, result.stderr
+    row = parse_tsv(details.read_text())[0]
+    assert row["status"] == reason
+    if reason == "no_control_baseline":
+        assert float(row["logit_psi"]) == pytest.approx(math.log(9))
+    else:
+        assert row["logit_psi"] == "NA"
+    for column in (
+        "delta_logit_psi",
+        "delta_logit_psi_weighted",
+        "delta_logit_psi_direction",
+        "delta_logit_psi_direction_weighted",
+    ):
+        assert row[column] == "NA"
 
 
 def test_intercept_changes_only_through_toml(model_file, write_rmats):
