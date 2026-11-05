@@ -34,9 +34,16 @@ Requires the unfiltered `A5SS.MATS.JC.txt` output from rMATS.
 A stub example input is included in
 [examples/A5SS.MATS.JC.txt](examples/A5SS.MATS.JC.txt).
 
+> [!IMPORTANT]
+> [Dawes et al.](https://doi.org/10.64898/2026.09.26.26364077) defined the splicing 
+> signature with rMATS-turbo (v4.3.0) with the following arguments: 
+> --libType fr-firststrand, --anchorLength 1, and --novelSS. The signature was developed
+> on the GENCODE v49 and GENCODE v46 annotations. We suggest that users match these 
+> settings to enable direct comparisons between samples.
+
 > [!NOTE]
 > - This tool requires GRCh38 coordinates. GRCh37/hg19 input is
-> incompatible. No coordinate conversion or liftover is performed.
+> incompatible.
 
 ## Usage
 
@@ -61,16 +68,16 @@ renu-score A5SS.MATS.JC.txt --group1-samples case_ids.txt --group2-samples contr
 
 The default output contains:
 
-| Column                               | Meaning                                      |
-| ------------------------------------ | -------------------------------------------- |
-| `sample`, `group`, `role`            | Sample name, rMATS group, case/control role  |
-| `uniform_sum`                        | Sum of oriented, control-centered log ratios |
-| `weighted_sum`                       | LASSO-weighted sum, excluding the intercept  |
-| `lasso_linpred`                      | Weighted sum plus intercept                  |
-| `lasso_prob`                         | LASSO `P(case)`                              |
-| `n_events_used`, `n_events_expected` | Usable and expected events per sample        |
-| `n_zero_coverage_events`             | Events with IJC=SJC=0 in this sample         |
-| `status`                             | Status of splicing signature: `complete`, `partial`, or `unavailable`      |
+| Column                               | Meaning                                                               |
+| ------------------------------------ | --------------------------------------------------------------------- |
+| `sample`, `group`, `role`            | Sample name, rMATS group, case/control role                           |
+| `uniform_sum`                        | Sum of oriented, control-centered log ratios                          |
+| `weighted_sum`                       | LASSO-weighted sum, excluding the intercept                           |
+| `lasso_linpred`                      | Weighted sum plus intercept                                           |
+| `lasso_prob`                         | LASSO `P(case)`                                                       |
+| `n_events_used`, `n_events_expected` | Usable and expected events per sample                                 |
+| `n_zero_coverage_events`             | Events with IJC=SJC=0 in this sample                                  |
+| `status`                             | Status of splicing signature: `complete`, `partial`, or `unavailable` |
 
 The optional `--details` output offers more granular information for every sample/event pair.
 
