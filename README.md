@@ -42,16 +42,10 @@ A stub example input is included in
 > settings to enable direct comparisons between samples.
 
 > [!NOTE]
-> - This tool requires GRCh38 coordinates. GRCh37/hg19 input is
-> incompatible.
-
-> [!NOTE]
-> The tool takes no account of rMATS statistical outputs, but does
-> require the output from two rMATS “sample groups”
-> (`--s1` and `--s2` or `--b1` and `--b2`). **The minimum
-> number of samples required is therefore one “case” and one “control”.**
-> The "case" and "control" labels are arbitrary - a ReNU syndrome
-> sample could be included among the "controls", for example.
+> - `renu-score` requires the rMATS output to contain two “sample groups”
+> (run rMATS with `--s1` and `--s2` or `--b1` and `--b2`).
+> - We suggest running `renu-score` with a bare minimum of two controls in the rMATS output. The more cases and controls available, the better.
+> - This tool requires GRCh38 coordinates. GRCh37/hg19 input is incompatible.
 
 ## Usage
 
@@ -89,22 +83,6 @@ The default output contains:
 
 The optional `--details` output offers more granular information for every sample/event pair.
 
-| Column | Meaning |
-| ------ | ------- |
-| `logit_psi` | Natural log of `(IJC + 0.5) / (SJC + 0.5)`; same as `log_ratio` |
-| `delta_logit_psi` | `logit_psi` minus the mean logit across usable controls (`control_mean`) |
-| `delta_logit_psi_weighted` | `delta_logit_psi` multiplied by the event's model weight |
-| `delta_logit_psi_direction` | `direction` multiplied by `delta_logit_psi`; same as `contribution` |
-| `delta_logit_psi_direction_weighted` | `delta_logit_psi_direction` multiplied by the event's model weight |
-
-These statistics use pseudocount-adjusted junction counts rather than rMATS's
-reported PSI. The `delta_logit_psi` and `delta_logit_psi_weighted` columns retain
-the inclusion/skipping direction. The two direction-adjusted columns apply the
-signature's `direction`, matching `contribution` and `weighted_contribution`.
-Unusable measurements are reported as `NA`.
-If an event has no usable controls, its logit is still reported for usable
-samples, but all delta statistics are `NA`.
-
 ## Configuration
 
 This tool does not train a new splicing signature model.
@@ -123,6 +101,6 @@ renu-score A5SS.MATS.JC.txt --config my-config.toml --output scores.tsv
 
 ## References
 
-- [Companion analysis pipeline](https://github.com/Computational-Rare-Disease-Genomics-WHG/rnu42_splicing_biomarker).
 - [Dawes et al., A cross-tissue splicing signature as a quantitative biomarker
   for ReNU syndrome](https://doi.org/10.64898/2026.09.26.26364077).
+- [Companion analysis pipeline](https://github.com/Computational-Rare-Disease-Genomics-WHG/rnu42_splicing_biomarker).

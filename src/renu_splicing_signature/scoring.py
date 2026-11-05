@@ -34,8 +34,6 @@ class DetailRow:
     control_mean: float | None
     direction: int
     weight: float
-    contribution: float | None
-    weighted_contribution: float | None
     status: str
     logit_psi: float | None
     delta_logit_psi: float | None
@@ -137,8 +135,6 @@ def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
                     baseline,
                     event.direction,
                     event.weight,
-                    contribution,
-                    weighted_contribution,
                     status,
                     log_ratio,
                     delta_logit_psi,

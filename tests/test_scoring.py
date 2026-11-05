@@ -46,7 +46,7 @@ def test_zero_coverage_removes_event_only_in_affected_sample(
     )
     assert detail.status == "zero_coverage"
     assert detail.ijc == detail.sjc == 0
-    assert detail.contribution is None
+    assert detail.delta_logit_psi_direction is None
 
 
 @pytest.mark.parametrize("ijc,sjc", [("0,4", "0,4"), ("NA,4", "4,4"), (",4", "4,4")])
@@ -60,7 +60,7 @@ def test_baseline_excludes_missing_controls(
         d for d in result.details if d.sample == "cases_1" and "CTDSP2" in d.event
     )
     assert detail.control_mean == 0
-    assert detail.contribution == pytest.approx(math.log(9))
+    assert detail.delta_logit_psi_direction == pytest.approx(math.log(9))
     assert result.rows[0].uniform_sum == pytest.approx(2.5 * math.log(9))
 
 
@@ -173,7 +173,7 @@ def test_minimum_depth_filters_each_sample_and_control_baseline(
     ]
     assert all(d.control_mean == pytest.approx(math.log(1.4)) for d in event_details)
     assert event_details[0].ijc == 3 and event_details[0].sjc == 1
-    assert event_details[0].contribution is None
+    assert event_details[0].delta_logit_psi_direction is None
     assert any(
         "below_min_read_depth" in warning and "cases_1" in warning
         for warning in result.warnings
