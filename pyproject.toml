@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "renu-splicing-signature"
 version = "0.2.1"
-description = "Quantify the RNU4-2 six-event splicing signature from rMATS junction counts"
+description = "Quantify the RNU4-2 insT and Stem III splicing signatures from rMATS junction counts"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{name = "Alex", email = "alex.blakes@gmail.com"}]

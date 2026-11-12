@@ -4,7 +4,8 @@ A command-line tool accompanying [Dawes et al., A cross-tissue splicing
 signature as a quantitative biomarker for ReNU
 syndrome](https://doi.org/10.64898/2026.09.26.26364077).
 
-Quantifies the six-event *RNU4-2* n.64_65insT splicing signature from
+Quantifies the eleven-event *RNU4-2* n.64_65insT splicing signature or the
+provisional seven-event Stem III signature from
 [`rMATS`](https://doi.org/10.1038/s41596-023-00944-2) junction counts.
 
 ## Install
@@ -87,11 +88,17 @@ The optional `--details` output offers more granular information for every sampl
 
 This tool does not train a new splicing signature model.
 
-The six splicing events and fitted model parameters for the n.64_65insT signature are bundled with the tool in
+The eleven splicing events and fitted model parameters for the n.64_65insT signature are bundled with the tool in
 [`config/insT.toml`](config/insT.toml).
 
-Use `--stem3` to test the provisional Stem III signature, bundled in
+Use `--stem3` to test the provisional seven-event Stem III signature, bundled in
 [`config/stem3.toml`](config/stem3.toml).
+
+The bundled parameters come from the insT export generated on 4 November 2026
+and the Stem III export generated on 5 November 2026. Event directions and LASSO
+weights are used unchanged; the intercepts are −5.801580601 (insT) and
+−9.602676381 (Stem III). Control means are recomputed from the input cohort’s
+own controls.
 
 To customise the signature, copy and edit the example TOML and use the `--config` CLI option:
 

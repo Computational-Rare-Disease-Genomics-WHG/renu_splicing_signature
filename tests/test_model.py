@@ -6,29 +6,79 @@ import pytest
 from renu_splicing_signature.model import SignatureError, load_model
 
 
-def test_published_default_parameters():
+def test_exported_default_parameters():
     model = load_model()
-    assert model.intercept == -2.927847423
+    assert model.intercept == -5.801580601
     assert model.min_read_depth == 0
     assert model.reference_genome == "GRCh38"
-    assert [
-        (e.id.split(":")[1], e.strand, e.direction, e.weight) for e in model.events
-    ] == [
-        ("CTDSP2", "-", -1, 0.825615979283261),
-        ("PTBP3", "-", -1, 0.783806558002269),
-        ("MAP4K4", "+", 1, 0.737422747142889),
-        ("TOP1", "+", -1, 0.560782708354878),
-        ("STX16", "+", 1, 0.401105638015341),
-        ("RPS15A", "-", 1, 0.290736572720099),
+    assert [(e.id, e.strand, e.direction, e.weight) for e in model.events] == [
+        (
+            "A5SS:TOP1:chr20:41113969:41114155:41113969:41114137:41115370:41115439",
+            "+",
+            -1,
+            1.14042455766648,
+        ),
+        (
+            "A5SS:PTBP3:chr9:112297831:112297916:112297840:112297916:112275843:112276013",
+            "-",
+            -1,
+            1.06368701929139,
+        ),
+        (
+            "A5SS:CTDSP2:chr12:57827533:57827590:57827551:57827590:57826995:57827097",
+            "-",
+            -1,
+            0.969370522153456,
+        ),
+        (
+            "A5SS:RAPGEF6:chr5:131446482:131446703:131446488:131446703:131442348:131442537",
+            "-",
+            -1,
+            0.841212521255102,
+        ),
+        (
+            "A5SS:MAP4K4:chr2:101887087:101887261:101887087:101887237:101887777:101887937",
+            "+",
+            1,
+            0.814402833049619,
+        ),
+        (
+            "A5SS:NOSIP:chr19:49557080:49557249:49557089:49557249:49556874:49556993",
+            "-",
+            1,
+            0.757724724952428,
+        ),
+        (
+            "A5SS:STX16:chr20:58667489:58667608:58667489:58667597:58667986:58668127",
+            "+",
+            1,
+            0.374948358283195,
+        ),
+        (
+            "A5SS:RPS15A:chr16:18790243:18790334:18790309:18790334:18788980:18789118",
+            "-",
+            1,
+            0.345633586259682,
+        ),
+        (
+            "A5SS:GMPR2:chr14:24233478:24233598:24233478:24233586:24235736:24235820",
+            "+",
+            -1,
+            0.323374634587344,
+        ),
+        (
+            "A5SS:KLHDC4:chr16:87756398:87756477:87756421:87756477:87755193:87755292",
+            "-",
+            1,
+            0.312110135265812,
+        ),
+        (
+            "A5SS:PHF3:chr6:63711166:63711362:63711166:63711286:63711585:63726011",
+            "+",
+            -1,
+            0.068643539907702,
+        ),
     ]
-    assert model.events[-1].coordinates == (
-        18790243,
-        18790334,
-        18790309,
-        18790334,
-        18788980,
-        18789118,
-    )
 
 
 def test_visible_model_matches_packaged_default():
@@ -37,21 +87,55 @@ def test_visible_model_matches_packaged_default():
     assert tomllib.loads(example.read_text())["schema_version"] == 1
 
 
-def test_published_stem3_parameters_and_editable_copy():
+def test_exported_stem3_parameters_and_editable_copy():
     root = Path(__file__).resolve().parents[1]
     model = load_model(root / "src/renu_splicing_signature/data/stem3.toml")
     assert model == load_model(root / "config/stem3.toml")
-    assert model.intercept == -6.752413202
+    assert model.intercept == -9.602676381
     assert model.reference_genome == "GRCh38"
-    assert [
-        (e.id.split(":")[1], e.strand, e.direction, e.weight) for e in model.events
-    ] == [
-        ("GNB1", "-", -1, 4.8105378883953),
-        ("KMT2C", "-", -1, 3.55266993907258),
-        ("MAP4K4", "+", 1, 3.30286768231348),
-        ("CBFB", "+", 1, 0.787522943329501),
-        ("TOP1", "+", -1, 0.782071984537327),
-        ("CINP", "-", -1, 0.119777511853926),
+    assert [(e.id, e.strand, e.direction, e.weight) for e in model.events] == [
+        (
+            "A5SS:SF1:chr11:64767566:64767844:64767570:64767844:64767191:64767251",
+            "-",
+            1,
+            4.96907898342119,
+        ),
+        (
+            "A5SS:PRRC2C:chr1:171584418:171584541:171584418:171584526:171587002:171587221",
+            "+",
+            1,
+            3.84154874596638,
+        ),
+        (
+            "A5SS:NUP98:chr11:3760487:3760626:3760538:3760626:3753315:3753408",
+            "-",
+            1,
+            3.79622221015688,
+        ),
+        (
+            "A5SS:GNB1:chr1:1787321:1787437:1787325:1787437:1785285:1787053",
+            "-",
+            -1,
+            3.71763940311118,
+        ),
+        (
+            "A5SS:MAP4K4:chr2:101887087:101887261:101887087:101887237:101887777:101887937",
+            "+",
+            1,
+            2.33849486301692,
+        ),
+        (
+            "A5SS:HNRNPC:chr14:21230957:21231072:21230996:21231072:21230318:21230366",
+            "-",
+            -1,
+            0.633537728191756,
+        ),
+        (
+            "A5SS:MAP3K4:chr6:161093772:161093851:161093772:161093839:161097079:161097176",
+            "+",
+            -1,
+            0.165414905155582,
+        ),
     ]
 
 

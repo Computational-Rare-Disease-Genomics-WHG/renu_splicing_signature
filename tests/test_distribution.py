@@ -125,15 +125,25 @@ def test_installed_wheel_scores_outside_checkout_with_bundled_model(
         "controls_1",
         "controls_2",
     ]
+    expected_events = 7 if stem3 else 11
     assert all(
-        row["status"] == "complete" and row["n_events_used"] == "6" for row in rows
+        row["status"] == "complete"
+        and int(row["n_events_used"]) == expected_events
+        and int(row["n_events_expected"]) == expected_events
+        for row in rows
     )
     assert float(rows[0]["lasso_prob"]) > float(rows[-1]["lasso_prob"])
     with details.open(newline="") as handle:
         detail_rows = list(csv.DictReader(handle, delimiter="\t"))
-    assert len(detail_rows) == 24
+    assert len(detail_rows) == 4 * expected_events
     assert all(row["status"] == "used" for row in detail_rows)
     if stem3:
         assert {row["event"].split(":")[1] for row in detail_rows} == {
-            "GNB1", "KMT2C", "MAP4K4", "CBFB", "TOP1", "CINP"
+            "SF1",
+            "PRRC2C",
+            "NUP98",
+            "GNB1",
+            "MAP4K4",
+            "HNRNPC",
+            "MAP3K4",
         }
