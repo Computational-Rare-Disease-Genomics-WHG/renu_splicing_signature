@@ -1,7 +1,7 @@
-"""Apply a fixed signature after centering on matched controls."""
+"""Apply signature refits after centering on matched controls."""
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from .model import Model, SignatureError
 from .rmats import Counts, Dataset
@@ -33,7 +33,7 @@ class DetailRow:
     log_ratio: float | None
     control_mean: float | None
     direction: int
-    weight: float
+    weight: float | None
     status: str
     logit_psi: float | None
     delta_logit_psi: float | None
@@ -71,11 +71,45 @@ def _measurement(pair: Counts | None, min_read_depth: int) -> tuple[float | None
     return math.log(2 * pair.ijc + 1) - math.log(2 * pair.sjc + 1), "used"
 
 
+def _apply_weights(
+    model: Model, details: list[DetailRow]
+) -> tuple[float, list[DetailRow]]:
+    available = frozenset(d.event for d in details if d.status == "used")
+    intercept = model.intercept
+    if model.subset_fits is None:
+        weights = {e.id: e.weight for e in model.events}
+    elif not available:
+        weights = {}
+    else:
+        fit = model.subset_fits.get(available)
+        if fit is None:
+            raise SignatureError(f"No exact subset refit for {details[0].sample}")
+        intercept, weights = fit.intercept, fit.weights
+    weighted_details = []
+    for detail in details:
+        weight = weights.get(detail.event)
+        weighted = oriented_weighted = None
+        if detail.status == "used":
+            weighted = weight * detail.delta_logit_psi
+            oriented_weighted = weight * detail.delta_logit_psi_direction
+            if not math.isfinite(oriented_weighted):
+                raise SignatureError(
+                    f"Nonfinite weighted contribution for {detail.sample}, {detail.event}"
+                )
+        weighted_details.append(
+            replace(
+                detail,
+                weight=weight,
+                delta_logit_psi_weighted=weighted,
+                delta_logit_psi_direction_weighted=oriented_weighted,
+            )
+        )
+    return intercept, weighted_details
+
+
 def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
     """Score each sample with its own available subset; never impute missingness."""
     n_samples = len(dataset.samples)
-    contributions: list[list[float]] = [[] for _ in dataset.samples]
-    weighted: list[list[float]] = [[] for _ in dataset.samples]
     zero_counts = [0] * n_samples
     details = []
     warnings = []
@@ -104,23 +138,14 @@ def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
             zip(dataset.samples, measurements)
         ):
             pair = counts[index] if counts is not None else None
-            contribution = weighted_contribution = None
-            delta_logit_psi = delta_logit_psi_weighted = None
+            contribution = delta_logit_psi = None
             if status == "zero_coverage":
                 zero_counts[index] += 1
             if status == "used" and baseline is None:
                 status = "no_control_baseline"
             if status == "used":
                 delta_logit_psi = log_ratio - baseline
-                delta_logit_psi_weighted = event.weight * delta_logit_psi
                 contribution = event.direction * delta_logit_psi
-                weighted_contribution = event.weight * contribution
-                if not math.isfinite(weighted_contribution):
-                    raise SignatureError(
-                        f"Nonfinite weighted contribution for {sample.name}, {event.id}"
-                    )
-                contributions[index].append(contribution)
-                weighted[index].append(weighted_contribution)
             if status != "used":
                 missing_by_status.setdefault(status, []).append(sample.name)
             details.append(
@@ -134,13 +159,13 @@ def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
                     log_ratio,
                     baseline,
                     event.direction,
-                    event.weight,
+                    None,
                     status,
                     log_ratio,
                     delta_logit_psi,
-                    delta_logit_psi_weighted,
+                    None,
                     contribution,
-                    weighted_contribution,
+                    None,
                 )
             )
         for status, names in missing_by_status.items():
@@ -149,12 +174,17 @@ def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
             )
     rows = []
     for index, sample in enumerate(dataset.samples):
-        used = len(contributions[index])
+        intercept, sample_details = _apply_weights(model, details[index::n_samples])
+        details[index::n_samples] = sample_details
+        usable = [d for d in sample_details if d.status == "used"]
+        used = len(usable)
         if used:
             try:
-                uniform_sum = math.fsum(contributions[index])
-                weighted_sum = math.fsum(weighted[index])
-                linpred = model.intercept + weighted_sum
+                uniform_sum = math.fsum(d.delta_logit_psi_direction for d in usable)
+                weighted_sum = math.fsum(
+                    d.delta_logit_psi_direction_weighted for d in usable
+                )
+                linpred = intercept + weighted_sum
             except OverflowError as exc:
                 raise SignatureError(
                     f"Score overflow for {sample.name}; check model parameters"

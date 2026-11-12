@@ -49,6 +49,13 @@ def test_sdist_ships_model_and_examples_without_workspace_artifacts(tmp_path):
         str(p).endswith("src/renu_splicing_signature/data/stem3.toml") for p in paths
     )
     assert any(str(p).endswith("config/stem3.toml") for p in paths)
+    for signature in ("insT", "stemIII"):
+        assert any(
+            str(p).endswith(
+                f"src/renu_splicing_signature/data/subset_refit_weights_{signature}.csv"
+            )
+            for p in paths
+        )
     assert any(str(p).endswith("examples/A5SS.MATS.JC.txt") for p in paths)
     assert not any(
         {".superpowers", ".venv", ".aws"}.intersection(p.parts) for p in paths
@@ -147,3 +154,43 @@ def test_installed_wheel_scores_outside_checkout_with_bundled_model(
             "HNRNPC",
             "MAP3K4",
         }
+
+    # Run a partial signature with the installed executable, outside the checkout.
+    partial = tmp_path / "partial.txt"
+    with (root / "examples/A5SS.MATS.JC.txt").open(newline="") as handle:
+        reader = csv.reader(handle, delimiter="\t")
+        header = next(reader)
+        event_rows = [
+            row for row in reader if row[header.index("geneSymbol")] == "MAP4K4"
+        ]
+    with partial.open("w", newline="") as handle:
+        writer = csv.writer(handle, delimiter="\t")
+        writer.writerow(header)
+        writer.writerows(event_rows)
+    result = subprocess.run(
+        [str(executable), str(partial), *signature_args, "--details", str(details)],
+        check=False,
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    rows = list(csv.DictReader(io.StringIO(result.stdout), delimiter="\t"))
+    expected_weight = 4.59763537561303 if stem3 else 5.36662803091663
+    expected_intercept = -3.52994047485274 if stem3 else -3.2633453653868
+    assert len(rows) == 4
+    assert all(
+        row["status"] == "partial" and row["n_events_used"] == "1" for row in rows
+    )
+    for row in rows:
+        assert float(row["lasso_linpred"]) - float(
+            row["weighted_sum"]
+        ) == pytest.approx(expected_intercept)
+    with details.open(newline="") as handle:
+        detail_rows = list(csv.DictReader(handle, delimiter="\t"))
+    assert all(
+        float(row["weight"]) == expected_weight
+        for row in detail_rows
+        if row["status"] == "used"
+    )

@@ -1,11 +1,17 @@
 """Load and validate portable A5SS model parameters."""
 
+from __future__ import annotations
+
 import math
 import re
 import tomllib
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from importlib.resources import files
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .subsets import SubsetFit
 
 EventKey = tuple[str, str, tuple[int, ...]]
 COORDINATE_COLUMNS = (
@@ -95,6 +101,7 @@ class Model:
     intercept: float
     events: tuple[Event, ...]
     min_read_depth: int = 0
+    subset_fits: dict[frozenset[str], SubsetFit] | None = None
 
 
 def load_model(path: Path | None = None) -> Model:
@@ -116,6 +123,7 @@ def load_model(path: Path | None = None) -> Model:
         "intercept",
         "min_read_depth",
         "events",
+        "subset_weights",
     }
     if unknown:
         raise SignatureError("Unknown model fields: " + ", ".join(sorted(unknown)))
@@ -148,10 +156,24 @@ def load_model(path: Path | None = None) -> Model:
         if any(event.key == previous.key for previous in events):
             raise SignatureError(f"Duplicate model event coordinates: {event.id}")
         events.append(event)
-    return Model(
+    model = Model(
         config["name"],
         config["reference_genome"],
         intercept,
         tuple(events),
         min_read_depth,
     )
+    if "subset_weights" not in config:
+        return model
+    from .subsets import load_subset_fits
+
+    fits = load_subset_fits(config["subset_weights"], model.events)
+    full = fits[frozenset(event.id for event in model.events)]
+    if full.intercept != intercept or any(
+        full.weights[event.id] != event.weight for event in model.events
+    ):
+        raise SignatureError(
+            "Model parameters differ from subset_weights; remove subset_weights "
+            "to use custom fixed weights and intercept"
+        )
+    return replace(model, subset_fits=fits)

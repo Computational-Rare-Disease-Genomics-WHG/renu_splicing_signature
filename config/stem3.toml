@@ -1,9 +1,11 @@
-# Parameters from stemIII_signature_export.csv and stemIII_signature_export_meta.txt.
-# Export generated at 2026-11-05 15:49:30 GMT; events are in export rank order.
+# Event definitions from the November 2026 signature export.
+# Full-set parameters from subset_refit_weights_stemIII.csv (supplied 2026-11-12).
 schema_version = 1
+# Remove subset_weights before editing events, weights, or intercept.
+subset_weights = "stem3"
 name = "RNU4-2 provisional Stem III seven-event signature"
 reference_genome = "GRCh38"
-intercept = -9.602676381
+intercept = -9.60267638133653
 # Minimum IJC + SJC per sample/event; zero coverage is always missing.
 min_read_depth = 0
 # Control means are recomputed from the input cohort's controls.

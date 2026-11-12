@@ -73,16 +73,17 @@ The default output contains:
 
 | Column                               | Meaning                                                               |
 | ------------------------------------ | --------------------------------------------------------------------- |
-| `sample`, `group`, `role`            | Sample name, `rMATS` group, case/control role                           |
+| `sample`, `group`, `role`            | Sample name, `rMATS` group, case/control role                         |
 | `uniform_sum`                        | Sum of oriented, control-centered log ratios                          |
 | `weighted_sum`                       | LASSO-weighted sum, excluding the intercept                           |
 | `lasso_linpred`                      | Weighted sum plus intercept                                           |
 | `lasso_prob`                         | LASSO `P(case)`                                                       |
 | `n_events_used`, `n_events_expected` | Usable and expected events per sample                                 |
-| `n_zero_coverage_events`             | Events with `IJC=SJC=0` in this sample                                  |
+| `n_zero_coverage_events`             | Events with `IJC=SJC=0` in this sample                                |
 | `status`                             | Status of splicing signature: `complete`, `partial`, or `unavailable` |
 
-The optional `--details` output offers more granular information for every sample/event pair.
+The optional `--details` output offers more granular information for every
+sample/event pair.
 
 ## Configuration
 
@@ -94,17 +95,12 @@ The eleven splicing events and fitted model parameters for the n.64_65insT signa
 Use `--stem3` to test the provisional seven-event Stem III signature, bundled in
 [`config/stem3.toml`](config/stem3.toml).
 
-The bundled parameters come from the insT export generated on 4 November 2026
-and the Stem III export generated on 5 November 2026. Event directions and LASSO
-weights are used unchanged; the intercepts are −5.801580601 (insT) and
-−9.602676381 (Stem III). Control means are recomputed from the input cohort’s
-own controls.
+Commonly, not every splicing event is available for each sample. In this case, the tool
+uses custom weights calculated for every possible combination of events.
+These custom weights are bundled here:
 
-To customise the signature, copy and edit the example TOML and use the `--config` CLI option:
-
-```bash
-renu-score A5SS.MATS.JC.txt --config my-config.toml --output scores.tsv
-```
+- [insT: 2,047 combinations of 11 unique events](src/renu_splicing_signature/data/subset_refit_weights_insT.csv)
+- [Stem III: 127 combinations of 7 unique events](src/renu_splicing_signature/data/subset_refit_weights_stemIII.csv)
 
 ## References
 

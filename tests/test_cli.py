@@ -475,3 +475,101 @@ def test_toml_minimum_depth_controls_scores_and_details(
     assert rows[0]["n_events_used"] == "1" and rows[0]["status"] == "partial"
     assert "below_min_read_depth" in result.stderr
     assert parse_tsv(details.read_text())[0]["status"] == "below_min_read_depth"
+
+
+@pytest.mark.parametrize("signature", ["insT", "stemIII"])
+@pytest.mark.parametrize("destination", ["--output", "--details"])
+def test_cannot_overwrite_bundled_subset_table(tmp_path, signature, destination):
+    import shutil
+
+    package = tmp_path / "renu_splicing_signature"
+    shutil.copytree(ROOT / "src/renu_splicing_signature", package)
+    table = package / "data" / f"subset_refit_weights_{signature}.csv"
+    before = table.read_bytes()
+    env = dict(os.environ, PYTHONPATH=str(tmp_path))
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "renu_splicing_signature",
+            "--example",
+            destination,
+            str(table),
+        ],
+        env=env,
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 2
+    assert "overwrite" in result.stderr
+    assert result.stdout == ""
+    assert table.read_bytes() == before
+
+
+@pytest.mark.parametrize(
+    "stem3,weight,intercept",
+    [
+        (False, 5.36662803091663, -3.2633453653868),
+        (True, 4.59763537561303, -3.52994047485274),
+    ],
+)
+def test_cli_uses_singleton_refit_for_partial_samples(
+    write_rmats, rmats_rows, tmp_path, stem3, weight, intercept
+):
+    details = tmp_path / "details.tsv"
+    args = ["--stem3"] if stem3 else []
+    result = run_cli(write_rmats(rmats_rows[1:]), *args, "--details", details)
+    assert result.returncode == 0, result.stderr
+    rows = parse_tsv(result.stdout)
+    # MAP4K4 is direction +1 in both signatures. Controls have log ratios
+    # ln(9) and zero, so the case is centered at -1.5*ln(9).
+    expected_weighted = -1.5 * math.log(9) * weight
+    assert float(rows[0]["weighted_sum"]) == pytest.approx(expected_weighted)
+    assert float(rows[0]["lasso_linpred"]) == pytest.approx(
+        intercept + expected_weighted
+    )
+    assert all(
+        row["status"] == "partial" and row["n_events_used"] == "1" for row in rows
+    )
+    event_rows = parse_tsv(details.read_text())
+    used = [row for row in event_rows if row["status"] == "used"]
+    assert len(used) == 3
+    assert all(float(row["weight"]) == weight for row in used)
+    assert all(row["weight"] == "NA" for row in event_rows if row["status"] != "used")
+
+
+@pytest.mark.parametrize("signature", ["insT", "stem3"])
+@pytest.mark.parametrize("destination", ["--output", "--details"])
+def test_copied_config_cannot_overwrite_implicit_bundled_model(
+    tmp_path, signature, destination
+):
+    import shutil
+
+    package = tmp_path / "renu_splicing_signature"
+    shutil.copytree(ROOT / "src/renu_splicing_signature", package)
+    bundled = package / "data" / f"{signature}.toml"
+    before = bundled.read_bytes()
+    copied_config = tmp_path / "copy.toml"
+    copied_config.write_bytes(before)
+    env = dict(os.environ, PYTHONPATH=str(tmp_path))
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "renu_splicing_signature",
+            "--example",
+            "--config",
+            str(copied_config),
+            destination,
+            str(bundled),
+        ],
+        env=env,
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 2
+    assert "overwrite" in result.stderr
+    assert result.stdout == ""
+    assert bundled.read_bytes() == before

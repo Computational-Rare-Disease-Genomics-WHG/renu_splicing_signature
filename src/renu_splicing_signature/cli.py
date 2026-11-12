@@ -13,6 +13,7 @@ from . import __version__
 from .model import SignatureError, load_model
 from .rmats import read_rmats
 from .scoring import DetailRow, ScoreRow, score_samples
+from .subsets import SUBSET_TABLES
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -139,7 +140,14 @@ def main(argv: list[str] | None = None) -> int:
             Path(__file__).parent / "data" / "stem3.toml" if args.stem3 else None
         )
         outputs = [path for path in (args.output, args.details) if path is not None]
-        inputs = [rmats, Path(__file__).parent / "data" / "insT.toml"]
+        inputs = [rmats]
+        inputs.extend(
+            Path(__file__).parent / "data" / f"{signature}.toml"
+            for signature in SUBSET_TABLES
+        )
+        inputs.extend(
+            Path(__file__).parent / "data" / name for name in SUBSET_TABLES.values()
+        )
         inputs.extend(
             path for path in (model_path, *names_paths.values()) if path is not None
         )

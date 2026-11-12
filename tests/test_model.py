@@ -8,7 +8,7 @@ from renu_splicing_signature.model import SignatureError, load_model
 
 def test_exported_default_parameters():
     model = load_model()
-    assert model.intercept == -5.801580601
+    assert model.intercept == -8.33698995873104
     assert model.min_read_depth == 0
     assert model.reference_genome == "GRCh38"
     assert [(e.id, e.strand, e.direction, e.weight) for e in model.events] == [
@@ -16,67 +16,67 @@ def test_exported_default_parameters():
             "A5SS:TOP1:chr20:41113969:41114155:41113969:41114137:41115370:41115439",
             "+",
             -1,
-            1.14042455766648,
+            1.59583263727201,
         ),
         (
             "A5SS:PTBP3:chr9:112297831:112297916:112297840:112297916:112275843:112276013",
             "-",
             -1,
-            1.06368701929139,
+            1.66554096320677,
         ),
         (
             "A5SS:CTDSP2:chr12:57827533:57827590:57827551:57827590:57826995:57827097",
             "-",
             -1,
-            0.969370522153456,
+            1.35459404495048,
         ),
         (
             "A5SS:RAPGEF6:chr5:131446482:131446703:131446488:131446703:131442348:131442537",
             "-",
             -1,
-            0.841212521255102,
+            1.1151504974413,
         ),
         (
             "A5SS:MAP4K4:chr2:101887087:101887261:101887087:101887237:101887777:101887937",
             "+",
             1,
-            0.814402833049619,
+            1.10203778267566,
         ),
         (
             "A5SS:NOSIP:chr19:49557080:49557249:49557089:49557249:49556874:49556993",
             "-",
             1,
-            0.757724724952428,
+            1.32609242384374,
         ),
         (
             "A5SS:STX16:chr20:58667489:58667608:58667489:58667597:58667986:58668127",
             "+",
             1,
-            0.374948358283195,
+            0.468438646246804,
         ),
         (
             "A5SS:RPS15A:chr16:18790243:18790334:18790309:18790334:18788980:18789118",
             "-",
             1,
-            0.345633586259682,
+            0.879075351189685,
         ),
         (
             "A5SS:GMPR2:chr14:24233478:24233598:24233478:24233586:24235736:24235820",
             "+",
             -1,
-            0.323374634587344,
+            0.438133779049095,
         ),
         (
             "A5SS:KLHDC4:chr16:87756398:87756477:87756421:87756477:87755193:87755292",
             "-",
             1,
-            0.312110135265812,
+            0.710113836564136,
         ),
         (
             "A5SS:PHF3:chr6:63711166:63711362:63711166:63711286:63711585:63726011",
             "+",
             -1,
-            0.068643539907702,
+            0.275871869501411,
         ),
     ]
 
@@ -91,7 +91,7 @@ def test_exported_stem3_parameters_and_editable_copy():
     root = Path(__file__).resolve().parents[1]
     model = load_model(root / "src/renu_splicing_signature/data/stem3.toml")
     assert model == load_model(root / "config/stem3.toml")
-    assert model.intercept == -9.602676381
+    assert model.intercept == -9.60267638133653
     assert model.reference_genome == "GRCh38"
     assert [(e.id, e.strand, e.direction, e.weight) for e in model.events] == [
         (
