@@ -194,3 +194,53 @@ def test_installed_wheel_scores_outside_checkout_with_bundled_model(
         for row in detail_rows
         if row["status"] == "used"
     )
+    assert "scores provided with caution" in result.stderr
+    assert "incorrectly flagged" in result.stderr
+    assert "Usable junctions (by gene): MAP4K4." in result.stderr
+
+    # The installed tool must use the bundled FPR metadata to suppress a
+    # high-FPR singleton, with warning-only exit behavior for every sample.
+    risky_gene = "MAP3K4" if stem3 else "TOP1"
+    with (root / "examples/A5SS.MATS.JC.txt").open(newline="") as handle:
+        reader = csv.reader(handle, delimiter="\t")
+        header = next(reader)
+        event_rows = [
+            row for row in reader if row[header.index("geneSymbol")] == risky_gene
+        ]
+    with partial.open("w", newline="") as handle:
+        writer = csv.writer(handle, delimiter="\t")
+        writer.writerow(header)
+        writer.writerows(event_rows)
+    result = subprocess.run(
+        [str(executable), str(partial), *signature_args, "--details", str(details)],
+        check=False,
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    rows = list(csv.DictReader(io.StringIO(result.stdout), delimiter="\t"))
+    assert len(rows) == 4
+    assert all(
+        row["status"] == "high_fpr"
+        and row["uniform_sum"]
+        == row["weighted_sum"]
+        == row["lasso_linpred"]
+        == row["lasso_prob"]
+        == "NA"
+        for row in rows
+    )
+    assert (
+        len(
+            [
+                line
+                for line in result.stderr.splitlines()
+                if "scores not provided" in line
+            ]
+        )
+        == 4
+    )
+    with details.open(newline="") as handle:
+        detail_rows = list(csv.DictReader(handle, delimiter="\t"))
+    assert all(row["delta_logit_psi_direction_weighted"] == "NA" for row in detail_rows)

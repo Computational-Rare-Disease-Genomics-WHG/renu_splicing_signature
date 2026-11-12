@@ -5,6 +5,7 @@ from dataclasses import dataclass, replace
 
 from .model import Model, SignatureError
 from .rmats import Counts, Dataset
+from .subsets import SubsetFit
 
 
 @dataclass(frozen=True)
@@ -71,20 +72,26 @@ def _measurement(pair: Counts | None, min_read_depth: int) -> tuple[float | None
     return math.log(2 * pair.ijc + 1) - math.log(2 * pair.sjc + 1), "used"
 
 
-def _apply_weights(
-    model: Model, details: list[DetailRow]
-) -> tuple[float, list[DetailRow]]:
+def _select_fit(model: Model, details: list[DetailRow]) -> SubsetFit | None:
     available = frozenset(d.event for d in details if d.status == "used")
+    if model.subset_fits is None or not available:
+        return None
+    fit = model.subset_fits.get(available)
+    if fit is None:
+        raise SignatureError(f"No exact subset refit for {details[0].sample}")
+    return fit
+
+
+def _apply_weights(
+    model: Model, details: list[DetailRow], fit: SubsetFit | None
+) -> tuple[float, list[DetailRow]]:
     intercept = model.intercept
-    if model.subset_fits is None:
-        weights = {e.id: e.weight for e in model.events}
-    elif not available:
-        weights = {}
-    else:
-        fit = model.subset_fits.get(available)
-        if fit is None:
-            raise SignatureError(f"No exact subset refit for {details[0].sample}")
+    if fit is not None:
         intercept, weights = fit.intercept, fit.weights
+    elif model.subset_fits is None:
+        weights = {e.id: e.weight for e in model.events}
+    else:
+        weights = {}
     weighted_details = []
     for detail in details:
         weight = weights.get(detail.event)
@@ -105,6 +112,28 @@ def _apply_weights(
             )
         )
     return intercept, weighted_details
+
+
+def _refit_warning(sample: str, fit: SubsetFit, usable: list[DetailRow]) -> str:
+    high_fpr = fit.fpr_pct >= 5
+    outcome = "scores not provided" if high_fpr else "scores provided with caution"
+    rate = f"{fit.fpr_pct:.2f}%"
+    if 0 < fit.fpr_pct < 0.01:
+        rate = "<0.01%"
+    elif fit.fpr_pct < 5 and rate == "5.00%":
+        rate = "<5%"
+    controls = "control sample" if fit.n_fp == 1 else "control samples"
+    cases = "a case" if fit.n_fp == 1 else "cases"
+    lines = [
+        f"Sample {sample}: {outcome}.",
+        f"The model for these junctions incorrectly flagged {fit.n_fp:,} "
+        f"{controls} as {cases} during evaluation ({rate}).",
+    ]
+    if high_fpr:
+        lines.append("This false-positive rate is at or above the 5% limit.")
+    genes = ", ".join(d.event.split(":")[1] for d in usable)
+    lines.append(f"Usable junctions (by gene): {genes}.")
+    return "\n  ".join(lines)
 
 
 def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
@@ -174,11 +203,28 @@ def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
             )
     rows = []
     for index, sample in enumerate(dataset.samples):
-        intercept, sample_details = _apply_weights(model, details[index::n_samples])
-        details[index::n_samples] = sample_details
+        sample_details = details[index::n_samples]
         usable = [d for d in sample_details if d.status == "used"]
         used = len(usable)
-        if used:
+        fit = _select_fit(model, sample_details)
+        high_fpr = fit is not None and fit.fpr_pct >= 5
+        if fit is not None and (fit.n_fp > 0 or high_fpr):
+            warnings.append(_refit_warning(sample.name, fit, usable))
+        if high_fpr:
+            sample_details = [
+                replace(
+                    d,
+                    weight=fit.weights.get(d.event),
+                    status="high_fpr" if d.status == "used" else d.status,
+                    delta_logit_psi_direction=None,
+                )
+                for d in sample_details
+            ]
+        else:
+            intercept, sample_details = _apply_weights(model, sample_details, fit)
+        details[index::n_samples] = sample_details
+        if used and not high_fpr:
+            usable = [d for d in sample_details if d.status == "used"]
             try:
                 uniform_sum = math.fsum(d.delta_logit_psi_direction for d in usable)
                 weighted_sum = math.fsum(
@@ -197,7 +243,7 @@ def score_samples(model: Model, dataset: Dataset) -> ScoreResult:
             status = "complete" if used == len(model.events) else "partial"
         else:
             uniform_sum = weighted_sum = linpred = probability = None
-            status = "unavailable"
+            status = "high_fpr" if high_fpr else "unavailable"
         rows.append(
             ScoreRow(
                 sample.name,

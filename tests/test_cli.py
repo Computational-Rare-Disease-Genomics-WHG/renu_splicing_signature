@@ -573,3 +573,102 @@ def test_copied_config_cannot_overwrite_implicit_bundled_model(
     assert "overwrite" in result.stderr
     assert result.stdout == ""
     assert bundled.read_bytes() == before
+
+
+@pytest.mark.parametrize("stem3,risky_gene", [(False, "TOP1"), (True, "MAP3K4")])
+@pytest.mark.parametrize("write_output", [False, True])
+def test_high_fpr_warns_and_withholds_only_affected_sample(
+    tmp_path, write_rmats, stem3, risky_gene, write_output
+):
+    with (ROOT / "examples/A5SS.MATS.JC.txt").open(newline="") as handle:
+        reader = csv.reader(handle, delimiter="\t")
+        header = next(reader)
+        event_rows = list(reader)
+    gene_index = header.index("geneSymbol")
+    for row in event_rows:
+        if row[gene_index] != risky_gene:
+            for column in ("IJC_SAMPLE_1", "SJC_SAMPLE_1"):
+                index = header.index(column)
+                row[index] = "0," + row[index].split(",")[1]
+    details = tmp_path / "details.tsv"
+    output = tmp_path / "scores.tsv"
+    args = ["--stem3"] if stem3 else []
+    if write_output:
+        args += ["--output", output]
+    result = run_cli(write_rmats(event_rows, header), *args, "--details", details)
+    assert result.returncode == 0, result.stderr
+    assert "warning:" in result.stderr and "scores not provided" in result.stderr
+    assert "error:" not in result.stderr and "Traceback" not in result.stderr
+    rows = parse_tsv(output.read_text() if write_output else result.stdout)
+    assert [r["sample"] for r in rows] == [
+        "cases_1",
+        "cases_2",
+        "controls_1",
+        "controls_2",
+    ]
+    assert rows[0]["status"] == "high_fpr"
+    assert rows[0]["n_events_used"] == "1"
+    score_columns = ("uniform_sum", "weighted_sum", "lasso_linpred", "lasso_prob")
+    assert all(rows[0][column] == "NA" for column in score_columns)
+    assert all(
+        r["status"] == "complete" and float(r["lasso_prob"]) >= 0 for r in rows[1:]
+    )
+    subset_warnings = [
+        line for line in result.stderr.splitlines() if "scores not provided" in line
+    ]
+    assert len(subset_warnings) == 1
+    assert f"Usable junctions (by gene): {risky_gene}." in result.stderr
+    assert "cases_1" in subset_warnings[0]
+    detail_rows = [
+        r for r in parse_tsv(details.read_text()) if r["sample"] == "cases_1"
+    ]
+    assert all(
+        r["delta_logit_psi_direction"]
+        == r["delta_logit_psi_weighted"]
+        == r["delta_logit_psi_direction_weighted"]
+        == "NA"
+        for r in detail_rows
+    )
+    selected = next(r for r in detail_rows if f"A5SS:{risky_gene}:" in r["event"])
+    assert selected["status"] == "high_fpr"
+    assert selected["log_ratio"] != "NA"
+    if write_output:
+        assert not result.stdout
+    else:
+        assert "warning:" not in result.stdout
+
+
+@pytest.mark.parametrize("stem3,risky_gene", [(False, "TOP1"), (True, "MAP3K4")])
+def test_all_high_fpr_samples_still_write_na_rows_and_exit_zero(
+    write_rmats, stem3, risky_gene
+):
+    with (ROOT / "examples/A5SS.MATS.JC.txt").open(newline="") as handle:
+        reader = csv.reader(handle, delimiter="\t")
+        header = next(reader)
+        event_rows = [
+            row for row in reader if row[header.index("geneSymbol")] == risky_gene
+        ]
+    args = ["--stem3"] if stem3 else []
+    result = run_cli(write_rmats(event_rows, header), *args)
+    assert result.returncode == 0, result.stderr
+    rows = parse_tsv(result.stdout)
+    assert len(rows) == 4
+    assert all(
+        r["status"] == "high_fpr"
+        and r["uniform_sum"]
+        == r["weighted_sum"]
+        == r["lasso_linpred"]
+        == r["lasso_prob"]
+        == "NA"
+        for r in rows
+    )
+    assert (
+        len(
+            [
+                line
+                for line in result.stderr.splitlines()
+                if "scores not provided" in line
+            ]
+        )
+        == 4
+    )

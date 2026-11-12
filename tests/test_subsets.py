@@ -101,8 +101,18 @@ def test_every_subset_scores_with_its_own_refit(signature):
         ]
         expected_weighted = math.log(9) * math.fsum(coefficients)
         expected_lp = float(fit["intercept"]) + expected_weighted
-        assert score.uniform_sum == pytest.approx(len(coefficients) * math.log(9))
         assert score.n_events_used == len(coefficients)
+        if float(fit["fpr_pct"]) >= 5:
+            assert score.status == "high_fpr"
+            assert (
+                score.uniform_sum
+                is score.weighted_sum
+                is score.lasso_linpred
+                is score.lasso_prob
+                is None
+            )
+            continue
+        assert score.uniform_sum == pytest.approx(len(coefficients) * math.log(9))
         assert score.weighted_sum == pytest.approx(expected_weighted)
         assert score.lasso_linpred == pytest.approx(expected_lp)
         assert score.lasso_prob == pytest.approx(1 / (1 + math.exp(-expected_lp)))
@@ -116,6 +126,14 @@ def test_every_subset_scores_with_its_own_refit(signature):
         if expected == "NA":
             assert detail.weight is None
             assert detail.delta_logit_psi_direction_weighted is None
+        elif float(fit["fpr_pct"]) >= 5:
+            assert detail.status == "high_fpr"
+            assert (
+                detail.delta_logit_psi_direction
+                is detail.delta_logit_psi_weighted
+                is detail.delta_logit_psi_direction_weighted
+                is None
+            )
         else:
             assert detail.weight == float(expected)
             assert detail.delta_logit_psi_direction_weighted == pytest.approx(
@@ -224,12 +242,12 @@ def test_partial_controls_select_their_own_fits(write_rmats, rmats_rows):
     assert case.uniform_sum == pytest.approx(-2 * math.log(9))
     assert case.weighted_sum == pytest.approx(expected)
     assert case.lasso_linpred == pytest.approx(-8.82581854676958 + expected)
-    assert ctdsp2_control.lasso_linpred == -2.0323931230272
+    assert ctdsp2_control.status == "high_fpr"
+    assert ctdsp2_control.lasso_linpred is None
     assert map4k4_control.lasso_linpred == -3.2633453653868
     used = [d for d in result.details if d.status == "used"]
     assert [d.weight for d in used] == [
         6.09810705946417,
-        3.02070593841187,
         12.9708828765886,
         5.36662803091663,
     ]

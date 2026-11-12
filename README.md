@@ -80,7 +80,7 @@ The default output contains:
 | `lasso_prob`                         | LASSO `P(case)`                                                       |
 | `n_events_used`, `n_events_expected` | Usable and expected events per sample                                 |
 | `n_zero_coverage_events`             | Events with `IJC=SJC=0` in this sample                                |
-| `status`                             | Status of splicing signature: `complete`, `partial`, or `unavailable` |
+| `status`                             | Status of splicing signature: `complete`, `partial`, `unavailable`, or `high_fpr` |
 
 The optional `--details` output offers more granular information for every
 sample/event pair.
@@ -101,6 +101,14 @@ These custom weights are bundled here:
 
 - [insT: 2,047 combinations of 11 unique events](src/renu_splicing_signature/data/subset_refit_weights_insT.csv)
 - [Stem III: 127 combinations of 7 unique events](src/renu_splicing_signature/data/subset_refit_weights_stemIII.csv)
+
+The bundled tables also include each subset's false-positive count (`n_fp`)
+and false-positive percentage (`fpr_pct`). If `n_fp > 0`, the tool warns with
+the sample name and its usable junctions. If `fpr_pct >= 5`, it also withholds
+all four scores for that sample, reporting `NA` and `status=high_fpr`.
+The details output retains counts and measurements but omits signature
+contributions for these samples. Other samples are scored as usual, and
+high-FPR warnings do not cause a nonzero exit status.
 
 ## References
 

@@ -12,12 +12,26 @@ SUBSET_TABLES = {
     "insT": "subset_refit_weights_insT.csv",
     "stem3": "subset_refit_weights_stemIII.csv",
 }
+METADATA_COLUMNS = ("intercept", "n_fp", "fpr_pct")
 
 
 @dataclass(frozen=True)
 class SubsetFit:
     intercept: float
     weights: dict[str, float]
+    n_fp: int
+    fpr_pct: float
+
+
+def _false_positive_stats(row: dict[str, str], line: int) -> tuple[int, float]:
+    try:
+        n_fp = int(row["n_fp"])
+        fpr_pct = float(row["fpr_pct"])
+    except (TypeError, ValueError) as exc:
+        raise SignatureError(f"Invalid n_fp or fpr_pct at row {line}") from exc
+    if n_fp < 0 or not math.isfinite(fpr_pct) or not 0 <= fpr_pct <= 100:
+        raise SignatureError(f"Invalid n_fp or fpr_pct at row {line}")
+    return n_fp, fpr_pct
 
 
 def _fit(row: dict[str, str], columns: dict[str, str], line: int) -> SubsetFit:
@@ -35,7 +49,8 @@ def _fit(row: dict[str, str], columns: dict[str, str], line: int) -> SubsetFit:
         raise SignatureError(f"Invalid subset_weights numbers at row {line}") from exc
     if not valid or not weights:
         raise SignatureError(f"Invalid subset_weights fit at row {line}")
-    return SubsetFit(intercept, weights)
+    n_fp, fpr_pct = _false_positive_stats(row, line)
+    return SubsetFit(intercept, weights, n_fp, fpr_pct)
 
 
 def load_subset_fits(
@@ -58,10 +73,10 @@ def load_subset_fits(
         "r", encoding="utf-8", newline=""
     ) as handle:
         reader = csv.DictReader(handle)
-        if sorted(reader.fieldnames or []) != sorted(["intercept", *columns]):
+        if sorted(reader.fieldnames or []) != sorted([*METADATA_COLUMNS, *columns]):
             raise SignatureError("Invalid subset_weights CSV header")
         for row in reader:
-            if set(row) != {"intercept", *columns}:
+            if set(row) != {*METADATA_COLUMNS, *columns}:
                 raise SignatureError(f"Invalid subset_weights row {reader.line_num}")
             fit = _fit(row, columns, reader.line_num)
             subset = frozenset(fit.weights)
