@@ -98,7 +98,7 @@ class Model:
 
 
 def load_model(path: Path | None = None) -> Model:
-    """Load a complete custom model or the bundled Table S2 model."""
+    """Load a complete custom model or the bundled insT model."""
     resource = (
         path
         if path is not None

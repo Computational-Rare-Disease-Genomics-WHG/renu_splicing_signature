@@ -43,7 +43,7 @@ def test_cli_uses_packaged_model_for_complete_example():
     result = run_cli(ROOT / "examples" / "A5SS.MATS.JC.txt")
     assert result.returncode == 0, result.stderr
     rows = parse_tsv(result.stdout)
-    assert all(r["n_events_used"] == "6" and r["status"] == "complete" for r in rows)
+    assert all(r["n_events_used"] == "11" and r["status"] == "complete" for r in rows)
     assert float(rows[0]["lasso_prob"]) > float(rows[-1]["lasso_prob"])
 
 
@@ -52,12 +52,12 @@ def test_stem3_selects_separate_signature_on_example(tmp_path):
     result = run_cli("--example", "--stem3", "--details", details)
     assert result.returncode == 0, result.stderr
     rows = parse_tsv(result.stdout)
-    assert all(row["n_events_expected"] == "6" for row in rows)
+    assert all(row["n_events_expected"] == "7" for row in rows)
     assert not result.stderr
-    assert all(row["n_events_used"] == "6" for row in rows)
+    assert all(row["n_events_used"] == "7" for row in rows)
     assert all(row["status"] == "complete" for row in rows)
     events = {row["event"].split(":")[1] for row in parse_tsv(details.read_text())}
-    assert events == {"GNB1", "KMT2C", "MAP4K4", "CBFB", "TOP1", "CINP"}
+    assert events == {"SF1", "PRRC2C", "NUP98", "GNB1", "MAP4K4", "HNRNPC", "MAP3K4"}
     reference = run_cli("--example", "--config", ROOT / "config" / "stem3.toml")
     assert reference.returncode == 0, reference.stderr
     assert result.stdout == reference.stdout
@@ -85,7 +85,7 @@ def test_example_flag_scores_bundled_input(tmp_path, write_output):
     assert reference.returncode == 0, reference.stderr
     assert scores == reference.stdout
     assert len(parse_tsv(scores)) == 4
-    assert len(parse_tsv(details.read_text())) == 24
+    assert len(parse_tsv(details.read_text())) == 44
     if write_output:
         assert result.stdout == ""
 
