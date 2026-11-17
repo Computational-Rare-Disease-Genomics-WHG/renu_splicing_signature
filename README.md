@@ -45,7 +45,7 @@ A stub example input is included in
 > [!NOTE]
 > - `renu-score` requires the `rMATS` output to contain two “sample groups”
 > (run `rMATS` with `--s1` and `--s2` or `--b1` and `--b2`).
-> - We suggest running `renu-score` with a bare minimum of two controls in the `rMATS` output. The more cases and controls available, the better.
+> - We suggest running `renu-score` with a bare minimum of two controls in the `rMATS` output. The more controls available, the better.
 > - This tool requires GRCh38 coordinates. GRCh37/hg19 input is incompatible.
 
 ## Usage
