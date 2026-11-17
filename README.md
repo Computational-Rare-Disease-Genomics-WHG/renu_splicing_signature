@@ -94,16 +94,10 @@ The eleven splicing events and fitted model parameters for the n.64_65insT signa
 Use `--stem3` to test the provisional seven-event Stem III signature, bundled in
 [`config/stem3.toml`](config/stem3.toml).
 
-The bundled parameters come from the insT export generated on 4 November 2026
-and the Stem III export generated on 5 November 2026. Event directions and LASSO
-weights are used unchanged; the intercepts are −5.801580601 (insT) and
-−9.602676381 (Stem III). Control means are recomputed from the input cohort’s
-own controls.
-
 To customise the signature, copy and edit the example TOML and use the `--config` CLI option:
 
 ```bash
-renu-score A5SS.MATS.JC.txt --config my-config.toml --output scores.tsv
+renu-score A5SS.MATS.JC.txt --config custom-signature.toml --output scores.tsv
 ```
 
 ## References
