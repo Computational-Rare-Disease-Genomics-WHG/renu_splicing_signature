@@ -1,4 +1,4 @@
-# ReNU splicing signature
+# renu-score
 
 A command-line tool accompanying [Dawes et al., A cross-tissue splicing
 signature as a quantitative biomarker for ReNU
